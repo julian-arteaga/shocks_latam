@@ -398,3 +398,43 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# --- 
+
+#Ignore input and output folders
+
+drafts/
+input
+output
+raw
+drafts
+temp
+temp/
+dta
+dta/
+dta/src
+dta/cln
+lit
+lit/
+out 
+out/
+
+*.DS_store
+# ignore log files
+*.log
+_*
+_*.m
+*.m~
+*.Rout
+*.Rhistory
+*.out
+*.RData
+.RData
+*.ipynb_checkpoints
+*__pycache__
+*.pyc
+.ipynb_checkpoints/
+__pycache__/
+*.pdf
+*.Rapp.history
+*.stswp
