@@ -419,6 +419,9 @@ lit/
 out 
 out/
 
+# Ignore virtual environment folder
+.venv/
+
 *.DS_store
 # ignore log files
 *.log
