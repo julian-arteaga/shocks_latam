@@ -418,7 +418,7 @@ lit
 lit/
 out 
 out/
-
+!.do/out
 # Ignore virtual environment folder
 .venv/
 
