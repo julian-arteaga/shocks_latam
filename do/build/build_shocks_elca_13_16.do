@@ -104,8 +104,8 @@ gen vivienda_activos=inlist(1,residencia,tierras,remesas,bienes)
 gen zona_2013 = zona 
 keep llave consecutivo ola choques                                         ///
      enfermedad muerte_jefe muerte_otro separacion empleo_jefe             ///
-     empleo_cony empleo_otro llegada residencia quiebra	               ///
-     remesas tierras cosechas animales bienes desastre violencia zona_2013
+     empleo_cony empleo_otro llegada residencia quiebra	               	   ///
+     remesas tierras cosechas animales bienes desastre violencia zona_2013 imp_econ1
 
 tempfile Choques_R2013
 save `Choques_R2013'
@@ -180,7 +180,7 @@ rename tuvo_choque14 violencia
 rename tuvo_choque15 desastre
 
 foreach var in enfermedad muerte_jefe muerte_otro separacion empleo_jefe   ///
-		   empleo_cony empleo_otro llegada residencia quiebra	         ///
+		   empleo_cony empleo_otro llegada residencia quiebra	           ///
 		   vivienda remesas bienes violencia desastre {
 	
 	recode `var' (2=0)
@@ -190,7 +190,7 @@ foreach var in enfermedad muerte_jefe muerte_otro separacion empleo_jefe   ///
 gen zona_2013 = zona 
 keep llave consecutivo ola choques enfermedad muerte_jefe muerte_otro      ///
      separacion empleo_jefe empleo_cony empleo_otro llegada residencia     ///
-     quiebra vivienda remesas bienes violencia desastre zona_2013 
+     quiebra vivienda remesas bienes violencia desastre zona_2013 imp_econ1
 
 append using `Choques_R2013'
 
@@ -284,7 +284,7 @@ gen vivienda_activos=inlist(1,residencia,tierras,remesas,bienes)
 keep llave llave_n16 consecutivo ola choques enfermedad muerte_jefe        ///
      muerte_otro separacion empleo_jefe empleo_cony empleo_otro llegada    ///
      residencia quiebra remesas tierras cosechas animales bienes desastre  ///
-     temblor sequia violencia zona_2016
+     temblor sequia violencia zona_2016 imp_econ1
 
 tempfile Choques_R2016
 save `Choques_R2016'
@@ -371,7 +371,7 @@ gen vivienda_activos=inlist(1,residencia,vivienda,remesas,bienes)
 keep llave zona_2016 llave_n16 consecutivo ola choques enfermedad          ///
      muerte_otro separacion empleo_jefe empleo_cony empleo_otro llegada    ///
      residencia quiebra vivienda remesas bienes desastre temblor           ///
-     sequia violencia muerte_jefe
+     sequia violencia muerte_jefe imp_econ1
 
 append using `Choques_R2016'
 
@@ -380,21 +380,37 @@ gen year = 2016
 append using `Choques_2013'
 
 gen shock_deathmember 	    = inlist(1, muerte_jefe, muerte_otro)
-// gen shock_abandonmember 	= P2116S2 == 1
 // gen shock_arrivalmember 	= P2116S3 == 1 
-gen shock_accident_illnss   = enfermedad
 gen shock_divorce 			= separacion
-gen shock_lostjob 			= inlist(1, empleo_jefe, empleo_otro)
 gen shock_abandonhouse 		= residencia
-gen shock_bankrupcy 		= quiebra
 gen shock_losthouse 		= vivienda
 //gen shock_lostland 			= P2116S10 == 1
 gen shock_lostremit 		= remesas
-gen shock_theftlostassets 	= bienes
-gen shock_robbery 			= bienes
 // gen shock_failharvest 		= P2116S14 == 1
 // gen shock_lostanimals 		= P2116S15 == 1
 gen shock_floodlandslide 	= desastre
 gen shock_earthquake 		= temblor
 gen shock_drought 			= sequia
 gen shock_violence 			= violencia
+
+* -----------------
+
+* Harmonize shock categories:
+
+gen shock_lostjob 			= inlist(1, empleo_jefe, empleo_otro)
+
+gen shock_bankrupcy 		= quiebra
+
+gen shock_accident_illnss   = enfermedad
+
+/* gen shock_abandonmember 	= P2116S2 == 1 */
+
+gen shock_criminality		= inlist(1, bienes, violencia)
+
+gen shock_natdisast = inlist(1, shock_earthquake, shock_drought, 		   ///
+							 shock_floodlandslide /*shock_failharvest*/)
+
+cd "$projdir/dta/cln/ELCA"
+save "elca_shock_prevalence_hhlvl_13_16.dta", replace
+
+* -------------------------------------------------------------------

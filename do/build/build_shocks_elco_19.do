@@ -12,10 +12,6 @@
 
 cd "$projdir/"
 
-use "dta/src/ELCA/ELCO_2019/B_DATOS DE LA VIVIENDA.dta", clear
-
-
-
 use "dta/src/ELCA/ELCO_2019/E_RIESGOS Y CHOQUES DEL HOGAR.dta", clear
 
 gen shock_deathmember 		= P2116S1 == 1
@@ -80,3 +76,30 @@ gen transfer_othrnogov = P2121 == 1
 
 keep shock_* transfer_* CONSECUTIVO_* DIRECTORIO SECUENCIA_* ORDEN
 
+gen elca_hh = CONSECUTIVO_DANE_2010 != "" |  ///
+			  CONSECUTIVO_DANE_2013 != "" |  ///
+			  CONSECUTIVO_DANE_2016 != ""
+
+* -----------------
+
+* Harmonize shock categories:
+
+// gen shock_lostjob
+
+// gen shock_bankrupcy 	
+
+// gen shock_accident_illnss  
+
+// gen shock_abandonmember
+
+gen shock_criminality = inlist(											   ///
+	1, shock_robbery, shock_theftlostassets, shock_violence				   ///
+)
+
+gen shock_natdisast = inlist(1, shock_earthquake, shock_drought, 		   ///
+							    shock_floodlandslide, shock_failharvest)
+
+cd "$projdir/dta/cln/ELCA"
+save "elca_shock_prevalence_hhlvl_19.dta", replace
+
+* -------------------------------------------------------------------
