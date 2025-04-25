@@ -1,0 +1,378 @@
+\documentclass[aspectratio = 169]{beamer}
+%\documentclass[handout, notes = show]{beamer} %Para mostrar notas. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                             %
+%             Load Packages                   %
+%                                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usetheme{default}
+\usepackage{amsmath} % NdR: for \begin{align} to work.
+\usepackage{bbm} % NdR: needed indicator function symbol
+\usepackage[utf8]{inputenc} % NdR: tildes en español. 
+\usepackage{adjustbox} % NdR: to insert big tables into presentations. From .tex of Margarita Gáfaro.
+\setbeamertemplate{navigation symbols}{} 
+\setbeamertemplate{itemize items}[circle]
+\setbeamertemplate{itemize subitem}{$-$}
+\usefonttheme[onlymath]{serif}
+
+\usepackage{graphicx} % NdR: varios de gráficos. 
+\usepackage{multirow} % NdR: para multirows in tables.
+\usepackage{comment}  % NdR: para comentarios de secciones enteras de texto.
+\usepackage{booktabs} % NdR: para el comando \cmidrule que facilita hacer lineas horizontales en las tablas sin que se toquen.
+\usepackage{threeparttable} %NdR: for tables (and table notes).
+\usepackage{xcolor} %NdR: para definir colores y colorear ecuaciones. 
+\usepackage{caption}
+\usepackage{subcaption}
+	
+	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                             %
+%              Slides Settings                %
+%                                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
+	
+%--- NdR: covered parts of slide displayed transparently.
+% \setbeamercovered{transparent} 
+%\setbeamercovered{invisible}
+
+% %--- NdR: definine blue	
+% \definecolor{azulndr}{RGB}{52,113,206} 
+	
+% %--- NdR: set color of slides
+% \setbeamercolor*{title}{bg=white,fg=azulndr}
+% \setbeamercolor*{item}{fg= azulndr}
+% \setbeamercolor{frametitle}{fg=azulndr}
+	
+% %--- NdR: Set color of slide buttons
+% \setbeamercolor{button}{fg= white, bg=  azulndr}
+% \renewcommand{\beamerreturnbutton}[1]{%
+% 	\begingroup% keep color changes local
+% 	\setbeamercolor{button}{fg= white , bg= azulndr}%
+% 	\beamerbutton{\insertreturnsymbol#1}% original definition
+% 	\endgroup
+% }
+	
+%--- NdR : Change the margins of one of the pages:
+%  from http://stackoverflow.com/questions/1670463/latex-change-margins-of-only-a-few-pages
+%  To use: \begin{changemargin}{-1cm}{-1cm} don't forget to \end{changemargin}
+\newenvironment{changemargin}[2]{%
+	\begin{list}{}{%
+			\setlength{\topsep}{0pt}%
+			\setlength{\leftmargin}{#1}%
+			\setlength{\rightmargin}{#2}%
+			\setlength{\listparindent}{\parindent}%
+			\setlength{\itemindent}{\parindent}%
+			\setlength{\parsep}{\parskip}%
+		}%
+	\item[]}{\end{list}}
+	
+%--- NdR: to change margin of all the frames:
+\setbeamersize{text margin left= 0.2in, text margin right= 0.2in}
+
+	
+% --- NdR: Put number to slide
+	\addtobeamertemplate{navigation symbols}{}{%
+		\usebeamerfont{footline}%
+		\usebeamercolor[fg]{footline}%
+		\hspace{1em}%
+		\insertframenumber/\inserttotalframenumber}
+	\addtocounter{page}{-1}
+
+% --- Restart counter for appendix slides
+\newcommand{\backupbegin}{
+   \newcounter{framenumberappendix}
+   \setcounter{framenumberappendix}{\value{framenumber}}
+}
+\newcommand{\backupend}{
+   \addtocounter{framenumberappendix}{-\value{framenumber}}
+   \addtocounter{framenumber}{\value{framenumberappendix}} 
+}
+
+% To shade gray: deemphasize text
+\newcommand{\light}[1]{\textcolor{gray!50!white}{#1}}
+
+\newcommand{\sym}[1]{\ifmmode^{#1}\else\(^{#1}\)\fi}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                             %
+%              Title Page                     %
+%                                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ \vspace*{-0.5cm}
+
+\title[]{Shocks in Latin American Household Surveys: \\ Incidence and Consequences}
+
+ \vspace*{0.1cm}
+
+%  \author[Luis Martinez]{}
+%  \institute[Emory]{\small{\begin{tabular}{c c c c c}
+% %  \textbf{Julián Arteaga} & \textbf{Nicolás de Roux} & \textbf{Magarita Gáfaro} & \textbf{Ana M. Ibáñez} & \textbf{Heitor Pellegrina} \\
+% %  World Bank & Los Andes & BanRep & IDB & Notre Dame\\ \\
+%  \end{tabular}}}
+ 
+\date{
+	% \small{\small Universidad del Rosario \\ 
+	
+	% \vspace{0.5cm}
+	April 2025}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                             %
+%                  Slides                     %
+%                                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+\begin{frame}{Research Question}
+
+	\begin{itemize}
+  
+	  \item \textbf{Big picture:} How do households cope with different types of shocks?
+		\begin{itemize}
+		  \item What type of policies can foster mitigation?
+		\end{itemize}
+		\bigskip
+  
+	  \item \textbf{Literature:}
+		\begin{itemize}
+  
+		  \item Large literature on impact of temporary vs.\ permanent shocks...
+			\begin{itemize}
+			  \item \textcolor{gray}{Deaton (1991); Paxson (1992); Townsend (1994) \dots}
+			\end{itemize}
+			\smallskip
+  
+		  \item Consumption smoothing, income smoothing, poverty traps...
+			\begin{itemize}
+			  \item \textcolor{gray}{Rosenzweig \& Wolpin (1993); Morduch (1995); Carter \& Zimmerman (2001)}
+			\end{itemize}
+			\smallskip
+  
+		  \item Impact of weather shocks / natural disasters:
+			\begin{itemize}
+			  \item \textcolor{gray}{Ibáñez et al.\ (2024); Deryugina et al.\ (2018); Kocornik-Mina (2020) \dots}
+			\end{itemize}
+			\smallskip
+  
+		  \item Impact of health shocks:
+			\begin{itemize}
+			  \item \textcolor{gray}{Fadlon \& Nielsen (2021); Mohanan (2013); Garcia-Gomez et al.\ (2013)}
+			\end{itemize}
+			\smallskip
+  
+		  \item Policy tools:
+			\begin{itemize}
+			  \item \textcolor{gray}{de Janvry et al. (2016): \emph{Progresa}}; \textcolor{gray}{Pople et al. (2021): Anticipatory transfers (drought)}; \textcolor{gray}{Carter \& Jansen (2019): Insurance (drought)}
+			\end{itemize}
+  
+		\end{itemize}
+  
+	\end{itemize}
+  
+  \end{frame}
+  
+  
+  \begin{frame}{Empirical Approach}
+	\begin{itemize}
+	  \item \textbf{Descriptive:} Using household surveys, measure shock incidence, estimate household responses to shocks.
+	  \bigskip 
+	  
+	  \item \textbf{Causal impact of weather shocks:} Match remote sensing and meteorological data with household/neighborhood/municipality panel data. 	
+	  \bigskip 
+
+	  \item \textbf{Causal impact of idiosyncratic shocks:}  administrative data (SISBEN, PILA, RIPS) to identify exogenous variation in shock exposure.
+	\end{itemize}
+  \end{frame}
+  
+  \begin{frame}{Data}
+	\begin{itemize}
+	  \item \textbf{Household Surveys:}
+	  \begin{itemize}
+		\item ELCA (Colombia)
+		\item MxFLS (Mexico)
+		\item ENAHO (Peru)
+		\item ENAHO (Bolivia)
+		\item PNAD-C (Brazil)
+		\item EHPM (El Salvador)
+		\item EPHPM (Honduras)
+	  \end{itemize}
+	  \bigskip
+
+	  \item \textbf{Administrative Data:} SISBEN, PILA, RIPS
+	  \bigskip 
+
+	  \item \textbf{Remote sensing \& meteorological data:} 
+	  \begin{itemize}
+			\item e.g. \emph{SALURBAL} dataset
+	  \end{itemize}
+	\end{itemize}
+  \end{frame}
+  
+\begin{frame}{SALURBAL: Neighborhood-level drought events}
+  \begin{minipage}{0.48\textwidth}
+	\centering
+	\includegraphics[scale=0.17]{out/nature_paper.png}
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+	\centering
+	\includegraphics[scale=0.2]{out/map_floods.png}
+\end{minipage}
+\end{frame}
+
+  \begin{frame}{Preliminary Hypotheses}
+	\begin{itemize}
+	  \item Hazard rate of shocks is higher for poorer households.
+	  \medskip
+	  \item Poorer households have fewer coping mechanisms.
+	  \bigskip
+	  \begin{itemize}
+	  	\item Can we substantiate these claims empirically?
+	  	\medskip
+	  	\item Can we estimate the impact of government programs as mitigation tools?
+	  \end{itemize}
+	\end{itemize}
+  \end{frame}
+
+\begin{frame}[c]{}         
+	\centering
+	\large Incidence of self-reported shocks: 
+\end{frame}
+
+\begin{frame}{Self-reported shocks: ELCA}
+
+	\begin{figure}
+		\includegraphics[scale=0.3]{out/elca_shocks_incidence.png}
+   \end{figure}   
+
+\end{frame}
+
+\begin{frame}{Self-reported shocks: rural vs urban}
+
+	\begin{figure}
+		\includegraphics[scale=0.3]{out/elca_shocks_incidence_ruralurban.png}
+   \end{figure}   
+
+\end{frame}
+
+\begin{frame}{Self-reported shocks: rural vs urban}
+
+	\begin{figure}
+		\includegraphics[scale=0.3]{out/elca_anyshock_incidence.png}
+   \end{figure}   
+
+\end{frame}
+
+\begin{frame}{Self-reported shocks by consumption quintiles}
+
+	\begin{figure}
+		\includegraphics[scale=0.3]{out/elca_anyshock_baselinecons_ruralurban.png}
+   \end{figure}   
+
+\end{frame}
+
+\begin{frame}{Self-reported shocks by consumption quintiles - Rural}
+
+	\begin{figure}
+		\includegraphics[scale=0.3]{out/elca_shocks_baselinecons_rural.png}
+   \end{figure}   
+
+\end{frame}
+
+\begin{frame}{Self-reported shocks by consumption quintiles - Urban}
+
+	\begin{figure}
+		\includegraphics[scale=0.3]{out/elca_shocks_baselinecons_urban.png}
+   \end{figure}   
+
+\end{frame}
+
+\begin{frame}{Self-reported shocks by consumption quintiles - Average all waves}
+
+	\begin{figure}
+		\includegraphics[scale=0.3]{out/elca_anyshock_baselinecons_allysurban.png}
+   \end{figure}   
+
+\end{frame}
+
+\begin{frame}[c]{}        
+	\centering
+	\large Response to shocks:
+\end{frame}
+  
+\begin{frame}{Different responses by shock type}
+
+	\begin{align*} 
+	    \Delta y_{i, t} = \beta Shock_{i,t} + \delta_{t} + \alpha \mathbbm{1}(rural_{i,t-1}=1) + \varepsilon_{i,t}
+	\end{align*}
+
+ 	\centering
+ 	\scalebox{0.8}{\input{out/shock_response_elca_13_16.tex}}
+ 	\medskip
+
+\end{frame}
+
+\begin{frame}{Arteaga et al., (2025)}
+
+	\vspace{-20pt}
+	\begin{align*} 
+	y_{i, m, t} = \beta TempShock_{i,t} + X'_{m,t}\gamma + \delta_{t} + \alpha_{i} + \varepsilon_{i,t}
+	\end{align*}
+
+   \vspace{-10pt}
+   \begin{figure}
+		\includegraphics[scale=0.25]{out/farmsize_tab4.png}
+   \end{figure}   
+
+\end{frame}
+
+\begin{frame}{Different responses by household type}
+
+	\vspace{-20pt}
+	\begin{align*} 
+	    \Delta y^{q}_{i, t} = \beta Shock_{i,t} + \delta_{t} + \alpha \mathbbm{1}(rural_{i,t-1}=1) + \varepsilon_{i,t}
+	\end{align*}
+	
+	\vspace{-10pt}
+   \begin{figure}
+		\includegraphics[scale=0.3]{out/elca_migrate_natdisast_baselinecons.png}
+   \end{figure}   
+
+\end{frame}
+
+\begin{frame}{Cross-country analysis:}
+
+	\begin{figure}
+		\caption{Self Reported Shoks: ENAHO - PERU}
+		\includegraphics[scale=0.45]{out/enaho_shocks_incidence_ruralurban.png}
+   \end{figure}   
+
+\end{frame}
+
+
+\begin{frame}{Cross-country analysis:}
+
+    \begin{minipage}{0.48\textwidth}
+        \centering
+		ELCA (COL)
+        \includegraphics[scale=0.25]{out/elca_shocks_incidence.png}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+		ENAHO (PER)
+        \includegraphics[scale=0.3]{out/enaho_shocks_incidence.png}
+    \end{minipage}
+
+\end{frame}
+
+
+\end{document}
+

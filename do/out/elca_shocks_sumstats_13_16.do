@@ -6,7 +6,7 @@
 
 * ----------------------------------------------------------------------------*
 
-* Compute shock prevalence summary statistics ELCA 2013-2016:
+* Compute shock incidence summary statistics ELCA 2013-2019:
 
 * -----------------
 
