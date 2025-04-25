@@ -420,6 +420,7 @@ out
 out/
 
 !do/out
+!out/*.pdf
 
 # Ignore virtual environment folder
 .venv/

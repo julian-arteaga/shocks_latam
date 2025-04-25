@@ -12,7 +12,16 @@
 
 cd "$projdir/"
 
+use "dta/src/ELCA/ELCO_2019/B_DATOS DE LA VIVIENDA.dta", clear
+
+keep CONSECUTIVO_DANE_ELCO_2019 CLASE
+
+tempfile hh_clase
+save `hh_clase'
+
 use "dta/src/ELCA/ELCO_2019/E_RIESGOS Y CHOQUES DEL HOGAR.dta", clear
+
+merge 1:1 CONSECUTIVO_DANE_ELCO_2019 using `hh_clase'
 
 gen shock_deathmember 		= P2116S1 == 1
 gen shock_abandonmember 	= P2116S2 == 1
@@ -74,7 +83,7 @@ gen transfer_fndfamext = P2119 == 1
 gen transfer_alimony   = P2120 == 1
 gen transfer_othrnogov = P2121 == 1
 
-keep shock_* transfer_* CONSECUTIVO_* DIRECTORIO SECUENCIA_* ORDEN
+keep shock_* transfer_* CONSECUTIVO_* DIRECTORIO SECUENCIA_* ORDEN CLASE
 
 gen elca_hh = CONSECUTIVO_DANE_2010 != "" |  ///
 			  CONSECUTIVO_DANE_2013 != "" |  ///
@@ -98,6 +107,8 @@ gen shock_criminality = inlist(											   ///
 
 gen shock_natdisast = inlist(1, shock_earthquake, shock_drought, 		   ///
 							    shock_floodlandslide, shock_failharvest)
+
+gen urban = CLASE == 1
 
 cd "$projdir/dta/cln/ELCA"
 save "elca_shock_prevalence_hhlvl_19.dta", replace
