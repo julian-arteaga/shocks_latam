@@ -15,5 +15,8 @@ global projdir "/Users/julian/Documents/Github/shocks_latam"
 
 if "`c(username)'" == "julianart" {
 	
-	global projdir "C:/Users/JULIANART/Documents/Github/shocks_latam""
+	local long1 C:/Users/JULIANART/
+	local long2 OneDrive - Inter-American Development Bank Group/
+	global projdir "`long1'`long2'Documents/shocks_latam"
 }
+

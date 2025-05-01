@@ -55,11 +55,11 @@
 % }
 	
 %--- NdR : Change the margins of one of the pages:
-%  from http://stackoverflow.com/questions/1670463/latex-change-margins-of-only-a-few-pages
+%  from http://stackoverflow.com/questions/1670463/latex-change-margins-of-only-a-few-pages©
 %  To use: \begin{changemargin}{-1cm}{-1cm} don't forget to \end{changemargin}
 \newenvironment{changemargin}[2]{%
 	\begin{list}{}{%
-			\setlength{\topsep}{0pt}%
+			\setlength{\topsep}{0pt}%©
 			\setlength{\leftmargin}{#1}%
 			\setlength{\rightmargin}{#2}%
 			\setlength{\listparindent}{\parindent}%
@@ -178,7 +178,6 @@
   
   \end{frame}
   
-  
   \begin{frame}{Empirical Approach}
 	\begin{itemize}
 	  \item \textbf{Descriptive:} Using household surveys, measure shock incidence, estimate household responses to shocks.
@@ -190,189 +189,191 @@
 	  \item \textbf{Causal impact of idiosyncratic shocks:}  administrative data (SISBEN, PILA, RIPS) to identify exogenous variation in shock exposure.
 	\end{itemize}
   \end{frame}
-  
-  \begin{frame}{Data}
-	\begin{itemize}
-	  \item \textbf{Household Surveys:}
-	  \begin{itemize}
-		\item ELCA (Colombia)
-		\item MxFLS (Mexico)
-		\item ENAHO (Peru)
-		\item ENAHO (Bolivia)
-		\item PNAD-C (Brazil)
-		\item EHPM (El Salvador)
-		\item EPHPM (Honduras)
-	  \end{itemize}
-	  \bigskip
-
-	  \item \textbf{Administrative Data:} SISBEN, PILA, RIPS
-	  \bigskip 
-
-	  \item \textbf{Remote sensing \& meteorological data:} 
-	  \begin{itemize}
-			\item e.g. \emph{SALURBAL} dataset
-	  \end{itemize}
-	\end{itemize}
-  \end{frame}
-  
-\begin{frame}{SALURBAL: Neighborhood-level drought events}
-  \begin{minipage}{0.48\textwidth}
-	\centering
-	\includegraphics[scale=0.17]{out/nature_paper.png}
-\end{minipage}
-\hfill
-\begin{minipage}{0.48\textwidth}
-	\centering
-	\includegraphics[scale=0.2]{out/map_floods.png}
-\end{minipage}
-\end{frame}
-
-  \begin{frame}{Preliminary Hypotheses}
-	\begin{itemize}
-	  \item Hazard rate of shocks is higher for poorer households.
-	  \medskip
-	  \item Poorer households have fewer coping mechanisms.
-	  \bigskip
-	  \begin{itemize}
-	  	\item Can we substantiate these claims empirically?
-	  	\medskip
-	  	\item Can we estimate the impact of government programs as mitigation tools?
-	  \end{itemize}
-	\end{itemize}
-  \end{frame}
-
-\begin{frame}[c]{}         
-	\centering
-	\large Incidence of self-reported shocks: 
-\end{frame}
-
-\begin{frame}{Self-reported shocks: ELCA}
-
-	\begin{figure}
-		\includegraphics[scale=0.3]{out/elca_shocks_incidence.png}
-   \end{figure}   
-
-\end{frame}
-
-\begin{frame}{Self-reported shocks: rural vs urban}
-
-	\begin{figure}
-		\includegraphics[scale=0.3]{out/elca_shocks_incidence_ruralurban.png}
-   \end{figure}   
-
-\end{frame}
-
-\begin{frame}{Self-reported shocks: rural vs urban}
-
-	\begin{figure}
-		\includegraphics[scale=0.3]{out/elca_anyshock_incidence.png}
-   \end{figure}   
-
-\end{frame}
-
-\begin{frame}{Self-reported shocks by consumption quintiles}
-
-	\begin{figure}
-		\includegraphics[scale=0.3]{out/elca_anyshock_baselinecons_ruralurban.png}
-   \end{figure}   
-
-\end{frame}
-
-\begin{frame}{Self-reported shocks by consumption quintiles - Rural}
-
-	\begin{figure}
-		\includegraphics[scale=0.3]{out/elca_shocks_baselinecons_rural.png}
-   \end{figure}   
-
-\end{frame}
-
-\begin{frame}{Self-reported shocks by consumption quintiles - Urban}
-
-	\begin{figure}
-		\includegraphics[scale=0.3]{out/elca_shocks_baselinecons_urban.png}
-   \end{figure}   
-
-\end{frame}
-
-\begin{frame}{Self-reported shocks by consumption quintiles - Average all waves}
-
-	\begin{figure}
-		\includegraphics[scale=0.3]{out/elca_anyshock_baselinecons_allysurban.png}
-   \end{figure}   
-
-\end{frame}
-
-\begin{frame}[c]{}        
-	\centering
-	\large Response to shocks:
-\end{frame}
-  
-\begin{frame}{Different responses by shock type}
-
-	\begin{align*} 
-	    \Delta y_{i, t} = \beta Shock_{i,t} + \delta_{t} + \alpha \mathbbm{1}(rural_{i,t-1}=1) + \varepsilon_{i,t}
-	\end{align*}
-
- 	\centering
- 	\scalebox{0.8}{\input{out/shock_response_elca_13_16.tex}}
- 	\medskip
-
-\end{frame}
-
-\begin{frame}{Arteaga et al., (2025)}
-
-	\vspace{-20pt}
-	\begin{align*} 
-	y_{i, m, t} = \beta TempShock_{i,t} + X'_{m,t}\gamma + \delta_{t} + \alpha_{i} + \varepsilon_{i,t}
-	\end{align*}
-
-   \vspace{-10pt}
-   \begin{figure}
-		\includegraphics[scale=0.25]{out/farmsize_tab4.png}
-   \end{figure}   
-
-\end{frame}
-
-\begin{frame}{Different responses by household type}
-
-	\vspace{-20pt}
-	\begin{align*} 
-	    \Delta y^{q}_{i, t} = \beta Shock_{i,t} + \delta_{t} + \alpha \mathbbm{1}(rural_{i,t-1}=1) + \varepsilon_{i,t}
-	\end{align*}
-	
-	\vspace{-10pt}
-   \begin{figure}
-		\includegraphics[scale=0.3]{out/elca_migrate_natdisast_baselinecons.png}
-   \end{figure}   
-
-\end{frame}
-
-\begin{frame}{Cross-country analysis:}
-
-	\begin{figure}
-		\caption{Self Reported Shoks: ENAHO - PERU}
-		\includegraphics[scale=0.45]{out/enaho_shocks_incidence_ruralurban.png}
-   \end{figure}   
-
-\end{frame}
-
-
-\begin{frame}{Cross-country analysis:}
-
-    \begin{minipage}{0.48\textwidth}
-        \centering
-		ELCA (COL)
-        \includegraphics[scale=0.25]{out/elca_shocks_incidence.png}
-    \end{minipage}
-    \hfill
-    \begin{minipage}{0.48\textwidth}
-        \centering
-		ENAHO (PER)
-        \includegraphics[scale=0.3]{out/enaho_shocks_incidence.png}
-    \end{minipage}
-
-\end{frame}
-
 
 \end{document}
+%   \begin{frame}{Data}
+% 	\begin{itemize}
+% 	  \item \textbf{Household Surveys:}
+% 	  \begin{itemize}
+% 		\item ELCA (Colombia)
+% 		\item MxFLS (Mexico)
+% 		\item ENAHO (Peru)
+% 		\item ENAHO (Bolivia)
+% 		\item PNAD-C (Brazil)
+% 		\item EHPM (El Salvador)
+% 		\item EPHPM (Honduras)
+% 	  \end{itemize}
+% 	  \bigskip
+
+% 	  \item \textbf{Administrative Data:} SISBEN, PILA, RIPS
+% 	  \bigskip 
+
+% 	  \item \textbf{Remote sensing \& meteorological data:} 
+% 	  \begin{itemize}
+% 			\item e.g. \emph{SALURBAL} dataset
+% 	  \end{itemize}
+% 	\end{itemize}
+%   \end{frame}
+  
+% \begin{frame}{SALURBAL: Neighborhood-level drought events}
+%   \begin{minipage}{0.48\textwidth}
+% 	\centering
+% 	\includegraphics[scale=0.17]{out/nature_paper.png}
+% \end{minipage}
+% \hfill
+% \begin{minipage}{0.48\textwidth}
+% 	\centering
+% 	\includegraphics[scale=0.2]{out/map_floods.png}
+% \end{minipage}
+% \end{frame}
+
+%   \begin{frame}{Preliminary Hypotheses}
+% 	\begin{itemize}
+% 	  \item Hazard rate of shocks is higher for poorer households.
+% 	  \medskip
+% 	  \item Poorer households have fewer coping mechanisms.
+% 	  \bigskip
+% 	  \begin{itemize}
+% 	  	\item Can we substantiate these claims empirically?
+% 	  	\medskip
+% 	  	\item Can we estimate the impact of government programs as mitigation tools?
+% 	  \end{itemize}
+% 	\end{itemize}
+%   \end{frame}
+
+% \begin{frame}[c]{}         
+% 	\centering
+% 	\large Incidence of self-reported shocks: 
+% \end{frame}
+
+% \begin{frame}{Self-reported shocks: ELCA}
+
+% 	\begin{figure}
+% 		\includegraphics[scale=0.3]{out/elca_shocks_incidence.png}
+%    \end{figure}   
+
+% \end{frame}
+
+% \begin{frame}{Self-reported shocks: rural vs urban}
+
+% 	\begin{figure}
+% 		\includegraphics[scale=0.3]{out/elca_shocks_incidence_ruralurban.png}
+%    \end{figure}   
+
+% \end{frame}
+
+% \begin{frame}{Self-reported shocks: rural vs urban}
+
+% 	\begin{figure}
+% 		\includegraphics[scale=0.3]{out/elca_anyshock_incidence.png}
+%    \end{figure}   
+
+% \end{frame}
+
+% \begin{frame}{Self-reported shocks by consumption quintiles}
+
+% 	\begin{figure}
+% 		\includegraphics[scale=0.3]{out/elca_anyshock_baselinecons_ruralurban.png}
+%    \end{figure}   
+
+% \end{frame}
+
+% \begin{frame}{Self-reported shocks by consumption quintiles - Rural}
+
+% 	\begin{figure}
+% 		\includegraphics[scale=0.3]{out/elca_shocks_baselinecons_rural.png}
+%    \end{figure}   
+
+% \end{frame}
+
+% \begin{frame}{Self-reported shocks by consumption quintiles - Urban}
+
+% 	\begin{figure}
+% 		\includegraphics[scale=0.3]{out/elca_shocks_baselinecons_urban.png}
+%    \end{figure}   
+
+% \end{frame}
+
+% \begin{frame}{Self-reported shocks by consumption quintiles - Average all waves}
+
+% 	\begin{figure}
+% 		\includegraphics[scale=0.3]{out/elca_anyshock_baselinecons_allysurban.png}
+%    \end{figure}   
+
+% \end{frame}
+
+% \begin{frame}[c]{}        
+% 	\centering
+% 	\large Response to shocks:
+% \end{frame}
+  
+% \begin{frame}{Different responses by shock type}
+
+% 	\begin{align*} 
+% 	    \Delta y_{i, t} = \beta Shock_{i,t} + \delta_{t} + \alpha \mathbbm{1}(rural_{i,t-1}=1) + \varepsilon_{i,t}
+% 	\end{align*}
+
+%  	\centering
+%  	\scalebox{0.8}{\input{out/shock_response_elca_13_16.tex}}
+%  	\medskip
+
+% \end{frame}
+
+% \begin{frame}{Arteaga et al., (2025)}
+
+% 	\vspace{-20pt}
+% 	\begin{align*} 
+% 	y_{i, m, t} = \beta TempShock_{i,t} + X'_{m,t}\gamma + \delta_{t} + \alpha_{i} + \varepsilon_{i,t}
+% 	\end{align*}
+
+%    \vspace{-10pt}
+%    \begin{figure}
+% 		\includegraphics[scale=0.25]{out/farmsize_tab4.png}
+%    \end{figure}   
+
+% \end{frame}
+
+% \begin{frame}{Different responses by household type}
+
+% 	\vspace{-20pt}
+% 	\begin{align*} 
+% 	    \Delta y^{q}_{i, t} = \beta Shock_{i,t} + \delta_{t} + \alpha \mathbbm{1}(rural_{i,t-1}=1) + \varepsilon_{i,t}
+% 	\end{align*}
+	
+% 	\vspace{-10pt}
+%    \begin{figure}
+% 		\includegraphics[scale=0.3]{out/elca_migrate_natdisast_baselinecons.png}
+%    \end{figure}   
+
+% \end{frame}
+
+% \begin{frame}{Cross-country analysis:}
+
+% 	\begin{figure}
+% 		\caption{Self Reported Shoks: ENAHO - PERU}
+% 		\includegraphics[scale=0.45]{out/enaho_shocks_incidence_ruralurban.png}
+%    \end{figure}   
+
+% \end{frame}
+
+
+% \begin{frame}{Cross-country analysis:}
+
+%     \begin{minipage}{0.48\textwidth}
+%         \centering
+% 		ELCA (COL)
+%         \includegraphics[scale=0.25]{out/elca_shocks_incidence.png}
+%     \end{minipage}
+%     \hfill
+%     \begin{minipage}{0.48\textwidth}
+%         \centering
+% 		ENAHO (PER)
+%         \includegraphics[scale=0.3]{out/enaho_shocks_incidence.png}
+%     \end{minipage}
+
+% \end{frame}
+
+
+% \end{document}
+
 
