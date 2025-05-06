@@ -95,3 +95,49 @@ combined_filter = ee.Filter.Or(cc_filter, countries_filter)
 colombia_images = gfd.filter(combined_filter)
 
 # %%
+
+# Get list of timestamps (in milliseconds since epoch)
+timestamps = colombia_images.aggregate_array('system:time_start').getInfo()
+
+# Convert to list of YYYY-MM-DD strings
+dates = [datetime.datetime.fromtimestamp(ts / 1000).strftime('%Y-%m-%d') for ts in timestamps]
+
+# Print result
+print('Dates of flood events involving Colombia:')
+print(dates)
+
+# %%
+
+# Download a single image to see how it looks like overlayed to col shpfile
+
+# Select one image (e.g., the first)
+test_image = ee.Image(colombia_images.toList(colombia_images.size()).
+					  get(2)).select('flooded')
+
+# Optionally clip to bounding box:
+barranquilla_bbox = ee.Geometry.Rectangle([
+    -74.90, 10.85,  # lower-left corner (lon, lat)
+    -74.70, 11.10   # upper-right corner (lon, lat)
+])
+test_image = test_image.clip(barranquilla_bbox)
+
+# %%
+
+# Export the image to your Google Drive
+file_name = 'flooded_bquilla'
+geemap.ee_export_image_to_drive(
+    ee_object=test_image,
+    description='flooded_barranquilla',
+    folder='earthengine',
+    fileNamePrefix='flooded_barranquilla',
+    region=barranquilla_bbox,
+    scale=250,
+    crs='EPSG:4326',
+    file_per_band=False
+)
+
+
+
+# %%
+task.start()
+# %%
