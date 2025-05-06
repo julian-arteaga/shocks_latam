@@ -12,7 +12,7 @@
 
 forvalues y = 2013(1)2023 {
 
-	cd "$projdir/dta/src/ENAHO/enaho/"
+	cd "$projdir/dta/src/ENAHO/"
 	use "`y'/Enaho01b-`y'-2.dta", clear
 
 	gen shock_lostjob   	  = p40_1 
