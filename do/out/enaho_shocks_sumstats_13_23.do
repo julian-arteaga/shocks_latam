@@ -92,3 +92,6 @@ erase g1.gph
 erase g2.gph
 
 * -----------------------------------------------
+
+* Correlate with consumption levels (2013-2016 only)
+

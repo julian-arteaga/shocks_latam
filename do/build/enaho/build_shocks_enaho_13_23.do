@@ -45,6 +45,5 @@ keep conglome vivienda hogar rural shock_* year
 cd "$projdir/dta/cln/ENAHO"
 save "enaho_shock_prevalence_hhlvl_13_23.dta", replace
 
-* -------------------------
-
+* -------------------------------------------------------------------
 
