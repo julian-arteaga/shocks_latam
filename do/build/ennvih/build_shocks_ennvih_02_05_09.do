@@ -13,18 +13,18 @@
 * [2002]
 
 * Crime shock is in different dataset:
-use "$projdir/dta/src/ENNVIH/ehh02dta_all/ehh02dta_b2/ii_vlh.dta", clear
+/* use "$projdir/dta/src/ENNVIH/ehh02dta_all/ehh02dta_b2/ii_vlh.dta", clear
 
 gen shock_crim_2	  	  = inlist(1, vlh12a, vlh12b, vlh14, vlh16)
 
 keep folio shock_crim_2 
 
 tempfile shockcrim2_2002
-save `shockcrim2_2002'
+save `shockcrim2_2002' */
 
 use "$projdir/dta/src/ENNVIH/ehh02dta_all/ehh02dta_bc/c_portad.dta", clear
 
-gen rural = estrato == 4
+gen rural = estrato == 4 // | estrato == 3
 
 keep folio rural 
 drop if folio == . // 3 obs
@@ -41,27 +41,30 @@ drop _merge
 gen anio = 2002
 
 * Time distance between interview and shock occurrence:
+gen tdist_deathmember = min(anio-se02aa_2, anio-se02ab_2, anio-se02ac_2)
 gen tdist_accident_illnss = min(anio-se02ba_2, anio-se02bb_2, anio-se02bc_2)
 gen tdist_lostjob = min(anio-se02ca_2, anio-se02cb_2, anio-se02cc_2)
 gen tdist_natdisast = min(anio-se02da_2, anio-se02db_2, anio-se02dc_2,     ///
-						  anio-se02ea_2, anio-se02eb_2, anio-se02ec_2)
-gen tdist_crim_1 = min(anio-se02fa_2, anio-se02fb_2, anio-se02fc_2)
+						  anio-se02ea_2, anio-se02eb_2, anio-se02ec_2,     ///
+						  anio-se02fa_2, anio-se02fb_2, anio-se02fc_2)
+//gen tdist_crim_1 = min()
 
 * Keep only shocks that occurred within the survey year and the year before
+gen shock_deathmember     = se01a == 1 & tdist_deathmember <= 1
 gen shock_accident_illnss = se01b == 1 & tdist_accident_illnss <= 1
 gen shock_lostjob   	  = se01c == 1 & tdist_lostjob <= 1
-gen shock_natdisast 	  = inlist(1, se01d, se01e) & tdist_natdisast <= 1
-gen shock_crim_1	  	  = se01f == 1 // cannot subset for crime shock
+gen shock_natdisast 	= inlist(1, se01d, se01e, se01f) & tdist_natdisast <= 1
+gen shock_crim_1	    = 0 // se01f == 1 & tdist_crim_1 <= 1
 
 keep folio rural shock_* 
 
-gen year = 2002
+// merge 1:1 folio using `shockcrim2_2002'
 
-merge 1:1 folio using `shockcrim2_2002'
-
-gen shock_criminality = shock_crim_1 == 1 | shock_crim_2 == 1
+gen shock_criminality = shock_crim_1 == 1 // | shock_crim_2 == 1
 
 drop shock_crim_*
+
+gen year = 2002
 
 keep folio year shock* rural
 
@@ -112,27 +115,30 @@ drop if _merge == 1
 drop _merge 
 
 * Time distance between interview and shock occurrence:
+gen tdist_deathmember = min(anio-se02aa_2, anio-se02ab_2, anio-se02ac_2)
 gen tdist_accident_illnss = min(anio-se02ba_2, anio-se02bb_2, anio-se02bc_2)
 gen tdist_lostjob = min(anio-se02ca_2, anio-se02cb_2, anio-se02cc_2)
 gen tdist_natdisast = min(anio-se02da_2, anio-se02db_2, anio-se02dc_2,     ///
-						  anio-se02ea_2, anio-se02eb_2, anio-se02ec_2)
-gen tdist_crim_1 = min(anio-se02fa_2, anio-se02fb_2, anio-se02fc_2)
+						  anio-se02ea_2, anio-se02eb_2, anio-se02ec_2,     ///
+						  anio-se02fa_2, anio-se02fb_2, anio-se02fc_2)
+//gen tdist_crim_1 = min
 
 * Keep only shocks that occurred within the survey year and the year before
+gen shock_deathmember     = se01a == 1 & tdist_deathmember <= 1
 gen shock_accident_illnss = se01b == 1 & tdist_accident_illnss <= 1
 gen shock_lostjob   	  = se01c == 1 & tdist_lostjob <= 1
 gen shock_natdisast 	  = inlist(1, se01d, se01e) & tdist_natdisast <= 1
-gen shock_crim_1	  	  = se01f == 1 // cannot subset for crime shock
+gen shock_crim_1	  	  = 0 // se01f == 1 & tdist_crim_1 <= 1
 
 keep folio rural shock_* anio
 
-gen year = 2005
-
-merge 1:1 folio using `shockcrim2_2005'
+merge 1:1 folio using `shockcrim2_2005' 
 
 gen shock_criminality = shock_crim_1 == 1 | shock_crim_2 == 1
 
 drop shock_crim_*
+
+gen year = 2005
 
 keep folio year shock* rural
 
@@ -182,21 +188,22 @@ drop if _merge == 1
 drop _merge 
 
 * Time distance between interview and shock occurrence:
+gen tdist_deathmember = min(anio-se02aa_2, anio-se02ab_2, anio-se02ac_2)
 gen tdist_accident_illnss = min(anio-se02ba_2, anio-se02bb_2, anio-se02bc_2)
 gen tdist_lostjob = min(anio-se02ca_2, anio-se02cb_2, anio-se02cc_2)
 gen tdist_natdisast = min(anio-se02da_2, anio-se02db_2, anio-se02dc_2,     ///
-						  anio-se02ea_2, anio-se02eb_2, anio-se02ec_2)
-gen tdist_crim_1 = min(anio-se02fa_2, anio-se02fb_2, anio-se02fc_2)
+						  anio-se02ea_2, anio-se02eb_2, anio-se02ec_2,	   ///
+						  anio-se02fa_2, anio-se02fb_2, anio-se02fc_2)
+// gen tdist_crim_1 = min()
 
 * Keep only shocks that occurred within the survey year and the year before
+gen shock_deathmember     = se01a == 1 & tdist_deathmember <= 1
 gen shock_accident_illnss = se01b == 1 & tdist_accident_illnss <= 1
 gen shock_lostjob   	  = se01c == 1 & tdist_lostjob <= 1
 gen shock_natdisast 	  = inlist(1, se01d, se01e) & tdist_natdisast <= 1
-gen shock_crim_1	  	  = se01f == 1 // cannot subset for crime shock
+gen shock_crim_1	  	  = 0 // se01f == 1 & tdist_crim_1 <= 1
 
 keep folio rural shock_* 
-
-gen year = 2009
 
 merge 1:1 folio using `shockcrim2_2009'
 
@@ -204,19 +211,37 @@ gen shock_criminality = shock_crim_1 == 1 | shock_crim_2 == 1
 
 drop shock_crim_*
 
+gen year = 2009
+
 keep folio year shock* rural
+
+rename folio folio09
+
+gen folio_1 = substr(folio09, 1, 6)
+
+gen folio_2 = substr(folio09, 7, 2)
+
+gen folio_3 = substr(folio09, 9, 2)
+
+gen folio = folio_1 + folio_3
 
 append using `shocks_2005'
 append using `shocks_2002'
 
-compress 
+bys folio year: gen numdup = _N
+drop if numdup > 1 & folio_2 == "CP" // 'new' household included in 2009
+
+drop folio_* folio09 numdup
+
+sort folio year 
+
+reshape wide rural shock_accident_illnss shock_lostjob 					   ///
+			 shock_natdisast shock_criminality shock_deathmember,		   ///
+			  i(folio) j(year)
+
+compress
 
 cd "$projdir/dta/cln/ENNVIH"
 save "ennvih_shock_prevalence_hhlvl_02_09.dta", replace
-
-* -------------------------------------
-
-
-
 
 * -------------------------------------------------------------------

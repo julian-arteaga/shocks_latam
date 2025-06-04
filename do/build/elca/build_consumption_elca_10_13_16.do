@@ -54,17 +54,32 @@ replace vr_compra_mes=vr_compra/12 if per_compra!=9							///
 	
 /*
 Generamos un indicador para los articulos que vamos a Incluir:
-Excluimos Bienes Durables segun definidos por Ana Maria (12.02.14.)
+Bienes Durables segun definidos por Ana Maria (12.02.14.)
 */
 
-gen ind_articulo= 1 if cod_articulo!=54 & cod_articulo!=58 &				///
-cod_articulo!=61 & cod_articulo!=62 & cod_articulo!=64 & cod_articulo!=65   ///
-& cod_articulo!=68 & cod_articulo!=69 & cod_articulo!=71 					
+gen ind_articulo= 1 /*if cod_articulo!=54 & cod_articulo!=58 &			   ///
+cod_articulo!=61 & cod_articulo!=62 & cod_articulo!=64 & cod_articulo!=65  ///
+& cod_articulo!=68 & cod_articulo!=69 & cod_articulo!=71 */				
 
 recode ind_articulo .=0
 
 drop if ind_articulo==0
-		
+
+* Types of consumption:
+
+gen alimento = inrange(cod_articulo, 1, 22)
+gen personal = inrange(cod_articulo, 23, 36) | 							   ///
+			   inlist(cod_articulo, 38, 39, 40, 41, 43, 44, 45) |		   ///
+			   inlist(cod_articulo, 48, 49, 50, 51, 63, 65) 
+			   // soap, newspaper, tobacco, clothes, etc. 
+gen educatio = cod_articulo == 47
+gen health   = inlist(cod_articulo, 37, 46)
+gen durables = inrange(cod_articulo, 54, 58) | 							   ///
+			   inlist(cod_articulo, 52, 61, 62, 68, 69, 70, 71)		
+			   // furniture, appliances, bikes, etc.
+gen insuranc = inlist(cod_articulo, 64, 66, 67, 72)
+gen leisure  = inlist(cod_articulo, 42, 53, 59, 60)
+
 *Arreglamos gasto en servicios publicos: input de Margarita*
 *LM: ¿es porque solo se paga mensual?
 *1. ver periodicidad problematica
@@ -83,12 +98,9 @@ tab indicador per_compra
 			
 sort vr_compra_mes 
 	
-/* Dudas con respecto a consecutivo 123221 gasto $2000. */
-			
 recode per_compra 1=4 if cod_articulo==32 & indicador_cambio==1
 replace vr_compra_mes=vr_compra if per_compra==4 & cod_articulo==32
 			
-
 *OBTENIDO: PAGO, PRODUCCION Y REGALOS
 		
 /*Identificamos bienes producidos en el hogar y pago en especie para sumarlos
@@ -125,25 +137,22 @@ egen vr_total_mes=rowtotal(vr_obtenido_mes vr_compra_mes)
 		bys consecutivo: egen total=sum(vr_compra_mes) 
 		gen prop=vr_compra_mes /total
 			
-		*percentil de compras
-		xtile percentil=total, nq(20)
-			
 		*Sacamos el total de compras al mes percápita
 		replace total=total/t_personas
 			
 		*Sacamos percentiles de el valor del obtenido y compra de mes
 		bys consecutivo: egen total_obt=sum(vr_obtenido_mes)
-		*y percentil de obtenidos
-		xtile percentil_obt=total_obt, nq(20)
-			
+
 		*generamos la secuencia de hogares
 		bys consecutivo: egen s=seq()
 
 	
 *Anualizando*
 foreach i in vr_compra_mes vr_obtenido_mes vr_hogar_mes vr_regalo_mes {
+
 	gen a_`i'=`i'*12
-	}
+}
+
 *Sumar con no comprados y comprados
 	
 	egen a_vr_total=rowtotal(a_vr_obtenido_mes a_vr_compra_mes)
@@ -154,8 +163,18 @@ foreach i in a_vr_total  a_vr_compra_mes a_vr_obtenido_mes a_vr_regalo_mes  ///
 		     a_vr_hogar_mes vr_total_mes vr_compra_mes vr_obtenido_mes	    ///
 			 vr_regalo_mes vr_hogar_mes {
 			 
-	bys consecutivo: egen t_`i'=sum(`i')
-	}
+	bys consecutivo: egen t_`i'=total(`i')
+}
+
+* Agregar por tipo de gasto:
+
+foreach type in alimento personal educatio health 						   ///
+				durables insuranc leisure {
+
+	gen t_`type' = a_vr_total if `type' == 1
+	bys consecutivo: egen t_vr_`type'_a = total(t_`type')
+	drop t_`type'
+}
 
 keep if s==1
 
@@ -164,54 +183,10 @@ rename t_a_vr_compra_mes ccompra_a
 rename t_a_vr_obtenido_mes obtenido_a
 rename t_a_vr_hogar_mes hhobtenido_a
 rename t_a_vr_regalo_mes regalo_a
-rename t_vr_total_mes ctotal_m 
-rename t_vr_compra_mes ccompra_m
-rename t_vr_obtenido_mes obtenido_m
-rename t_vr_regalo_mes regalo_m
-rename t_vr_hogar_mes hhobtenido_m
-	
-foreach x of varlist ctotal_a ccompra_a obtenido_a hhobtenido_a regalo_a    ///
-					 ctotal_m ccompra_m obtenido_m regalo_m hhobtenido_m {
-					 
-gen `x'_per=`x'/t_personas
-}
 
-/*ELIMINAR OUTLIERS
-
-  Esta forma de quitar outliers ya no cambia la base (seguro la arreglaron). 
-  Solo sirve en Urbanos_2010
-
- drop if ccompra_a==0
-	
-/* Vamos a eliminar las observaciones que tienen muy pocas compras 
-   (lo hacemos con los mensuales)*/
-  
-bys percentil: egen mean_ccompra_m_per=mean(ccompra_m_per)
-bys percentil: egen sd_ccompra_m_per=sd(ccompra_m_per)
-
-gen eliminar_outlier=0
-replace eliminar_outlier=1 if ccompra_m_per < mean_ccompra_m_per            ///
-	    - 2*sd_ccompra_m_per & percentil==1 
-				
-sort ccompra_m_per
-
-*Se eliminan 14 observaciones: que sólo compran de 885.7 a 40'600
-drop if eliminar_outlier==1
-drop eliminar_outlier
-	
-*Vamos a eliminar las observaciones que tienen muchas compras*
-gen eliminar_outlier=0
-replace eliminar_outlier=1 if ccompra_m_per>3000000
-br if eliminar_outlier==1
-drop if eliminar_outlier==1
-drop eliminar_outlier
-
-*/
-	
 *Terminando
-keep consecutivo ctotal_a ccompra_a obtenido_a hhobtenido_a regalo_a	///
-ctotal_m ccompra_m obtenido_m regalo_m hhobtenido_m fexhog region			///
-t_personas ola zona
+keep consecutivo ctotal_a ccompra_a obtenido_a hhobtenido_a regalo_a       ///
+	 fexhog region t_personas ola zona t_vr_*_a
 	
 /* Poner en precios de 2016
 	variacion de IPC (año corrido):
@@ -222,42 +197,84 @@ t_personas ola zona
 	2014: 3.66%
 	2015: 6.77%		*/
 
-local variables ctotal_a ccompra_a obtenido_a ctotal_m ccompra_m obtenido_m ///
-      regalo_m hhobtenido_m hhobtenido_a regalo_a
+local variables ctotal_a ccompra_a obtenido_a hhobtenido_a regalo_a		   ///
+	   			t_vr_alimento_a t_vr_personal_a t_vr_educatio_a 		   ///
+				t_vr_durables_a t_vr_health_a t_vr_insuranc_a 			   ///
+				t_vr_leisure_a
 	  
 	foreach var of local variables {
 	
-		replace `var'=`var'*(1.0317)*(1.0373)*(1.0244)*						///
+		replace `var'=`var'*(1.0317)*(1.0373)*(1.0244)*					   ///
 							(1.0194)*(1.0366)*(1.0677)
-		}
+	}
+
 sort consecutivo
 	
-format ctotal_a ccompra_a obtenido_a hhobtenido_a regalo_a ctotal_m 		///
-	   ccompra_m obtenido_m regalo_m hhobtenido_m %18.0g
+format ctotal_a ccompra_a obtenido_a hhobtenido_a regalo_a %18.0g
 		
-keep consecutivo ctotal_a ccompra_a obtenido_a hhobtenido_a regalo_a  ///
-	 ola zona t_personas
+keep consecutivo ctotal_a ccompra_a obtenido_a hhobtenido_a regalo_a  	   ///
+	 ola zona t_personas t_vr_*_a
 	
-*** Hasta aquÌ va el dofile original de Laura 
-
-/* En vez de eliminar la observaciÛn de ccompra_a==0 voy a dejar los valores en
-  missing para tener m·s claro cÛmo va el merge */
-
-foreach i in ctotal_a obtenido_a hhobtenido_a regalo_a {
-	replace `i'=. if ccompra_a==0
-}
-replace ccompra_a=. if ccompra_a==0
-
 rename ctotal_a consumo_total
 rename ccompra_a consumo_purchased
 rename hhobtenido_a consumo_selfcons
 rename regalo_a consumo_transfers
 
-*voy a guardar esto en una base provisional
+rename t_vr_*_a consumo_*
+
+*check:
+gen check = consumo_alimento + consumo_personal + consumo_educatio +	   ///
+			consumo_health + consumo_durables + consumo_insuranc +		   ///
+			consumo_leisure
+
+format check %15.0f
+
+assert abs(check - consumo_total) < 20 // 20 pesos
+
+drop check 
 
 tempfile consumo_R2010
-
 save `consumo_R2010'
+
+use "2010/Rural/Rpersonas.dta", clear
+
+foreach var of varlist vr_matricula vr_uniformes vr_utiles 			       ///
+						 vr_complem vr_bono vr_pension 					   ///
+						 vr_enfe vr_acci vr_odon vr_ciru vr_ult_hosp {
+	recode `var' 99=.
+	recode `var' 98=.
+	recode `var' 99999999=.
+	recode `var' 99998=.
+}
+
+replace vr_ult_hosp = vr_ult_hosp / 12 // yearly to monthly 
+
+egen health_exp = rowtotal(vr_enfe vr_acci vr_odon vr_ciru vr_ult_hosp)
+egen educ_exp = rowtotal(vr_matricula vr_uniformes vr_utiles 			   ///
+						 vr_complem vr_bono vr_pension)
+
+bys consecutivo: egen health_expenditure = total(health_exp)
+bys consecutivo: egen educ_expenditure   = total(educ_exp)
+
+bys consecutivo: keep if _n ==1 
+
+// convert health exp from monthly to yearly:
+replace health_expenditure = health_expenditure * 12
+
+keep consecutivo health_expenditure educ_expenditure 
+
+merge 1:1 consecutivo using `consumo_R2010'
+drop _merge 
+
+replace consumo_health = consumo_health + health_expenditure 
+replace consumo_educ   = consumo_educ   + educ_expenditure 
+
+drop health_expenditure educ_expenditure
+
+replace consumo_total = consumo_total + consumo_health + consumo_educ
+
+tempfile expendit_R2010
+save `expendit_R2010'
 
 /* I. 2010
 	b) Urbano  */
@@ -305,11 +322,23 @@ replace vr_compra_mes=vr_compra/12 if per_compra!=9							///
   cod_articulo=65 --> No hay ; cod_articulo=68 --> No hay ;
   cod_articulo=69 --> No hay ; cod_articulo=71 --> No hay. */
   					
-gen ind_articulo=0 if inlist(cod_articulo,26,30,33,34) 					
+gen ind_articulo=1 /* if inlist(cod_articulo,26,30,33,34) 					
 
 recode ind_articulo .=1
+drop if ind_articulo==0 */
 
-drop if ind_articulo==0
+gen alimento = inrange(cod_articulo, 1, 7)
+gen personal = inrange(cod_articulo, 8, 13)  | 							   ///
+			   inrange(cod_articulo, 15, 18) |							   ///
+			   inrange(cod_articulo, 21, 24) |							   ///
+			   inlist(cod_articulo, 28, 29)
+			   // soap, newspaper, tobacco, clothes, etc. 
+gen educatio = cod_articulo == 19
+gen health   = inlist(cod_articulo, 14, 20)
+gen durables = inlist(cod_articulo, 26, 27, 30, 33, 34)		
+			   // furniture, appliances, bikes, etc.
+gen insuranc = inlist(cod_articulo, 35)
+gen leisure  = inlist(cod_articulo, 25, 31, 32)
 
 *Arreglamos gasto en servicios publicos: input de Margarita
 
@@ -371,8 +400,9 @@ bys consecutivo: egen s=seq()
 
 *Anualizando
 foreach i in vr_compra_mes vr_obtenido_mes vr_hogar_mes vr_regalo_mes {
+
 	gen a_`i'=`i'*12
-	}
+}
 	
 *Sumar no comprados y comprados
 egen a_vr_total=rowtotal(a_vr_obtenido_mes a_vr_compra_mes)
@@ -383,9 +413,19 @@ foreach i in a_vr_total  a_vr_compra_mes a_vr_obtenido_mes a_vr_regalo_mes  ///
 		     a_vr_hogar_mes vr_total_mes vr_compra_mes vr_obtenido_mes	    ///
 			 vr_regalo_mes vr_hogar_mes {
 			 
-	bys consecutivo: egen t_`i'=sum(`i')
-	}
+	bys consecutivo: egen t_`i'=total(`i')
+}
 	
+* Agregar por tipo de gasto:
+
+foreach type in alimento personal educatio health 						   ///
+				durables insuranc leisure {
+
+	gen t_`type' = a_vr_total if `type' == 1
+	bys consecutivo: egen t_vr_`type'_a = total(t_`type')
+	drop t_`type'
+}
+
 keep if s==1
 
 rename t_a_vr_total ctotal_a
@@ -402,7 +442,7 @@ rename t_vr_hogar_mes hhobtenido_m
 foreach x of varlist ctotal_a ccompra_a obtenido_a hhobtenido_a regalo_a    ///
 					 ctotal_m ccompra_m obtenido_m regalo_m hhobtenido_m {
 					 
-gen `x'_per=`x'/t_personas
+	gen `x'_per=`x'/t_personas
 }
 
 /*ELIMINAR OUTLIERS (JAV: Esta es la única base (Urbano_2010) donde sí
@@ -430,7 +470,7 @@ replace eliminar_outlier=1 if ccompra_m_per>3000000
 *Terminando
 keep consecutivo ctotal_a ccompra_a obtenido_a hhobtenido_a regalo_a		///
 ctotal_m ccompra_m obtenido_m regalo_m hhobtenido_m fexhog region			///
-t_personas ola zona eliminar_outlier
+t_personas ola zona eliminar_outlier t_vr_*_a
 	
 /* Poner en precios de 2016
 	variacion de IPC (a√±o corrido):
@@ -441,29 +481,33 @@ t_personas ola zona eliminar_outlier
 	2014: 3.66%
 	2015: 6.77%		*/
 
-local variables ctotal_a ccompra_a obtenido_a ctotal_m ccompra_m obtenido_m ///
-      regalo_m hhobtenido_m hhobtenido_a regalo_a
+local variables ctotal_a ccompra_a obtenido_a ctotal_m ccompra_m  		   ///
+      obtenido_m regalo_m hhobtenido_m hhobtenido_a regalo_a 			   ///
+	  t_vr_alimento_a t_vr_personal_a t_vr_educatio_a 					   ///
+	  t_vr_durables_a t_vr_health_a t_vr_insuranc_a t_vr_leisure_a
 	  
-	foreach var of local variables {
+foreach var of local variables {
 	
-		replace `var'=`var'*(1.0317)*(1.0373)*(1.0244)*						///
+		replace `var'=`var'*(1.0317)*(1.0373)*(1.0244)*					   ///
 							(1.0194)*(1.0366)*(1.0677)
-		}
+}
 *
+
 sort consecutivo
 	
-format ctotal_a ccompra_a obtenido_a hhobtenido_a regalo_a ctotal_m 		///
+format ctotal_a ccompra_a obtenido_a hhobtenido_a regalo_a ctotal_m 	   ///
 	   ccompra_m obtenido_m regalo_m hhobtenido_m %18.0g
 		
-keep consecutivo ola zona ctotal_a ccompra_a obtenido_a				///
-	 hhobtenido_a regalo_a eliminar_outlier t_personas
-
+keep consecutivo ola zona ctotal_a ccompra_a obtenido_a				       ///
+	 hhobtenido_a regalo_a eliminar_outlier t_personas t_vr_*_a
+	
 *set outliers to missing
-foreach i in ctotal_a obtenido_a hhobtenido_a regalo_a {
-	replace `i'=. if ccompra_a==0
-	replace `i'=0 if eliminar_outlier==1
+foreach i of varlist ctotal_a obtenido_a hhobtenido_a 					   ///
+					 ccompra_a regalo_a t_vr_*_a {
+	
+	replace `i' = . if eliminar_outlier==1
 }
-replace ccompra_a=. if ccompra_a==0 | eliminar_outlier==1
+
 drop eliminar_outlier
 
 rename ctotal_a consumo_total
@@ -471,7 +515,63 @@ rename ccompra_a consumo_purchased
 rename hhobtenido_a consumo_selfcons
 rename regalo_a consumo_transfers
 
-append using `consumo_R2010'
+rename t_vr_*_a consumo_*
+
+*check:
+gen check = consumo_alimento + consumo_personal + consumo_educatio +	   ///
+			consumo_health + consumo_durables + consumo_insuranc +		   ///
+			consumo_leisure
+
+format check %15.0f
+
+assert abs(check - consumo_total) < 40 if consumo_total != . // 40 pesos
+
+drop check 
+
+tempfile consumo_U2010
+save `consumo_U2010'
+
+use "2010/Urbano/Upersonas.dta", clear
+
+foreach var of varlist vr_matricula vr_uniformes vr_utiles 			       ///
+						 vr_complem vr_bono vr_pension 					   ///
+						 vr_enfe vr_acci vr_odon vr_ciru vr_ult_hosp {
+	recode `var' 99=.
+	recode `var' 98=.
+	recode `var' 99999999=.
+	recode `var' 99998=.
+}
+
+replace vr_ult_hosp = vr_ult_hosp / 12 // yearly to monthly 
+
+egen health_exp = rowtotal(vr_enfe vr_acci vr_odon vr_ciru vr_ult_hosp)
+
+egen educ_exp = rowtotal(vr_matricula vr_uniformes vr_utiles 			   ///
+						 vr_complem vr_bono vr_pension)
+
+bys consecutivo: egen health_expenditure = total(health_exp)
+bys consecutivo: egen educ_expenditure   = total(educ_exp)
+
+bys consecutivo: keep if _n ==1 
+
+// convert health exp from monthly to yearly:
+replace health_expenditure = health_expenditure * 12
+
+keep consecutivo health_expenditure educ_expenditure 
+
+merge 1:1 consecutivo using `consumo_U2010'
+drop _merge 
+
+replace consumo_health = consumo_health + health_expenditure 
+replace consumo_educ   = consumo_educ   + educ_expenditure 
+
+drop health_expenditure educ_expenditure
+
+replace consumo_total = consumo_total + consumo_health + consumo_educ
+
+append using `expendit_R2010'
+
+gen year = 2010 
 
 tempfile consumo_2010
 save `consumo_2010'
@@ -488,7 +588,7 @@ save `gastos'
 use "2013/Rural/Rhogar.dta", clear
 append using "2013/Urbano/Uhogar.dta"
 
-keep llave t_personas consecutivo_c region
+keep llave t_personas consecutivo_c region vr_gtos_mensuales vr_gtos_mens_alim
 
 merge 1:m llave using `gastos'
 		  		  
@@ -542,11 +642,11 @@ replace vr_compra_mes=vr_compra/12 if cod_articulo>=55
   cod_articulo=65 --> 65 ; cod_articulo=68 --> 68 ;
   cod_articulo=69 --> No hay ; cod_articulo=71 --> 70. */			
 
-gen ind_articulo=0 if inlist(cod_articulo,55,59,61,62,64,65,68,70)
+gen ind_articulo = 1 /* if inlist(cod_articulo,55,59,61,62,64,65,68,70)
 
 recode ind_articulo .=1
 
-drop if ind_articulo==0	
+drop if ind_articulo==0	 */
 
 *Arreglamos gasto en servicios publicos: input de Margarita*
 
@@ -567,6 +667,22 @@ sort vr_compra_mes
 				
 recode per_compra 1=4 if cod_articulo==32 & indicador_cambio==1
 replace vr_compra_mes=vr_compra if per_compra==4 & cod_articulo==32
+
+* Types of consumption:
+
+gen alimento = inrange(cod_articulo, 1, 22)
+gen personal = inrange(cod_articulo, 23, 37) | 							   ///
+			   inrange(cod_articulo, 39, 42) |		   					   ///
+			   inlist(cod_articulo, 44, 45, 46, 49, 50, 51, 52, 53, 57)	|  ///
+			   inlist(cod_articulo, 58, 63, 64, 65, 69) 
+
+			   // soap, newspaper, tobacco, clothes, etc. 
+gen educatio = inlist(cod_articulo, 48, 72)
+gen health   = inlist(cod_articulo, 38, 47, 71)
+gen durables = inlist(cod_articulo, 55, 56, 59, 61, 62, 68, 70)
+			   // furniture, appliances, motorbikes, etc.
+gen insuranc = inlist(cod_articulo, 66, 67)
+gen leisure  = inlist(cod_articulo, 43, 54, 60)
 
 * Obtenidos: 
 
@@ -603,8 +719,9 @@ bys llave: egen s=seq()
 
 * Anualizando
 foreach i in vr_compra_mes vr_obtenido_mes vr_hogar_mes vr_regalo_mes {
+	
 	gen a_`i'=`i'*12
-	}
+}
 	
 * Sumar con no comprados y comprados
 	
@@ -616,8 +733,18 @@ foreach i in a_vr_total  a_vr_compra_mes a_vr_obtenido_mes a_vr_regalo_mes  ///
 		     a_vr_hogar_mes vr_total_mes vr_compra_mes vr_obtenido_mes	    ///
 			 vr_regalo_mes vr_hogar_mes {
 			 
-	bys llave: egen t_`i'=sum(`i')
-	}
+	bys llave: egen t_`i'=total(`i')
+}
+
+* Agregar por tipo de gasto:
+
+foreach type in alimento personal educatio health 						   ///
+				durables insuranc leisure {
+
+	gen t_`type' = a_vr_total if `type' == 1
+	bys llave: egen t_vr_`type'_a = total(t_`type')
+	drop t_`type'
+}
 
 keep if s==1
 
@@ -632,16 +759,16 @@ rename t_vr_obtenido_mes obtenido_m
 rename t_vr_regalo_mes regalo_m
 rename t_vr_hogar_mes hhobtenido_m
 	
-foreach x of varlist ctotal_a ccompra_a obtenido_a hhobtenido_a regalo_a    ///
-					 ctotal_m ccompra_m obtenido_m regalo_m hhobtenido_m {
+foreach x of varlist ctotal_a ccompra_a obtenido_a hhobtenido_a regalo_a   ///
+					 ctotal_m ccompra_m obtenido_m regalo_m hhobtenido_m   ///
+					 t_vr_*_a {
 					 
-gen `x'_per=`x'/t_personas
+	gen `x'_per=`x'/t_personas
 }
 
 *Terminando
-	
 format ctotal_a ccompra_a obtenido_a hhobtenido_a regalo_a ctotal_m 		///
-	   ccompra_m obtenido_m regalo_m hhobtenido_m %18.0g
+	   ccompra_m obtenido_m regalo_m hhobtenido_m t_vr_*_a %18.0g
 	   
 /* Poner en precios de 2016
 	variacion de IPC (a√±o corrido):
@@ -652,29 +779,57 @@ format ctotal_a ccompra_a obtenido_a hhobtenido_a regalo_a ctotal_m 		///
 	2014: 3.66%
 	2015: 6.77%		*/
 
-local variables ctotal_a ccompra_a obtenido_a ctotal_m ccompra_m obtenido_m ///
-      regalo_m hhobtenido_m hhobtenido_a regalo_a
-	  
-	foreach var of local variables {
+local variables ctotal_a ccompra_a obtenido_a ctotal_m ccompra_m  		   ///
+      obtenido_m regalo_m hhobtenido_m hhobtenido_a regalo_a		       ///
+	  t_vr_alimento_a t_vr_personal_a t_vr_educatio_a 		   			   ///
+	  t_vr_durables_a t_vr_health_a t_vr_insuranc_a 			   		   ///
+	  t_vr_leisure_a vr_gtos_mensuales vr_gtos_mens_alim
+
+foreach var of local variables {
 	
-		replace `var'=`var'*(1.0194)*(1.0366)*(1.0677)
-		}		
-*
-keep ola zona consecutivo llave ctotal_a ccompra_a obtenido_a hhobtenido_a  /// 
-     regalo_a t_personas
+	replace `var'=`var'*(1.0194)*(1.0366)*(1.0677)
+}		
+
+keep ola zona consecutivo llave ctotal_a ccompra_a obtenido_a hhobtenido_a /// 
+     regalo_a t_personas t_vr_*_a vr_gtos_mensuales vr_gtos_mens_alim
 	
-/* En vez de eliminar la observaciÛn de ccompra_a==0 voy a dejar los valores en
-  missing para tener m·s claro cÛmo va el merge */
+/* En vez de eliminar la observaciÛn de ccompra_a==0 voy a dejar los valores 
+  en missing para tener m·s claro cÛmo va el merge */
 
 foreach i in ctotal_a obtenido_a hhobtenido_a regalo_a {
-	replace `i'=. if ccompra_a==0
+	// replace `i'=. if ccompra_a==0
 }
-replace ccompra_a=. if ccompra_a==0
+
+// replace ccompra_a=. if ccompra_a==0
 
 rename ctotal_a consumo_total
 rename ccompra_a consumo_purchased
 rename hhobtenido_a consumo_selfcons
 rename regalo_a consumo_transfers
+
+rename t_vr_*_a consumo_*
+
+*check:
+gen check = consumo_alimento + consumo_personal + consumo_educatio +	   ///
+			consumo_health + consumo_durables + consumo_insuranc +		   ///
+			consumo_leisure
+
+format check %15.0f
+
+assert abs(check - consumo_total) < 20 // 20 pesos
+
+drop check 
+
+gen check2 = vr_gtos_mensuales * 12
+
+gen check3 = vr_gtos_mens_alim * 12
+
+reg consumo_total check2
+reg consumo_alimento check3
+
+drop check* vr_gtos*
+
+gen year = 2013 
 
 tempfile consumo_2013
 save `consumo_2013'
@@ -695,11 +850,11 @@ save `gastos'
 use "2016/Rural/Rhogar.dta", clear
 append using "2016/Urbano/Uhogar.dta"
 
-keep llave llave_n16 t_personas consecutivo_c
+keep llave llave_n16 t_personas consecutivo_c 							   ///
+	 vr_gtos_mensuales vr_gtos_mens_alim
 
 merge 1:m llave_n16 using `gastos'
 		  		  
-		  
 recode vr_obtenido 99=.
 recode vr_obtenido 98=.
 recode vr_compra 98=.
@@ -750,11 +905,11 @@ replace vr_compra_mes=vr_compra/12 if cod_articulo>=55
   cod_articulo=65 --> 65 ; cod_articulo=68 --> 68 ;
   cod_articulo=69 --> No hay ; cod_articulo=71 --> 70. */			
 
-gen ind_articulo=0 if inlist(cod_articulo,55,59,61,62,64,65,68,70)
+gen ind_articulo = 1 /*0 if inlist(cod_articulo,55,59,61,62,64,65,68,70)
 
 recode ind_articulo .=1
 
-drop if ind_articulo==0	
+drop if ind_articulo==0	 */
 
 *Arreglamos gasto en servicios publicos: input de Margarita*
 
@@ -775,6 +930,22 @@ sort vr_compra_mes
 				
 recode per_compra 1=4 if cod_articulo==32 & indicador_cambio==1
 replace vr_compra_mes=vr_compra if per_compra==4 & cod_articulo==32
+
+* Types of consumption:
+
+gen alimento = inrange(cod_articulo, 1, 22)
+gen personal = inrange(cod_articulo, 23, 37) | 							   ///
+			   inrange(cod_articulo, 39, 42) |		   					   ///
+			   inlist(cod_articulo, 44, 45, 46, 49, 50, 51, 52, 53, 57)	|  ///
+			   inlist(cod_articulo, 58, 63, 64, 65, 69) 
+
+			   // soap, newspaper, tobacco, clothes, etc. 
+gen educatio = inlist(cod_articulo, 48, 72)
+gen health   = inlist(cod_articulo, 38, 47, 71)
+gen durables = inlist(cod_articulo, 55, 56, 59, 61, 62, 68, 70)
+			   // furniture, appliances, motorbikes, etc.
+gen insuranc = inlist(cod_articulo, 66, 67)
+gen leisure  = inlist(cod_articulo, 43, 54, 60)
 
 * Obtenidos: 
 
@@ -811,8 +982,9 @@ bys llave_n16: egen s=seq()
 
 * Anualizando
 foreach i in vr_compra_mes vr_obtenido_mes vr_hogar_mes vr_regalo_mes {
+	
 	gen a_`i'=`i'*12
-	}
+}
 	
 * Sumar con no comprados y comprados
 	
@@ -824,8 +996,18 @@ foreach i in a_vr_total  a_vr_compra_mes a_vr_obtenido_mes a_vr_regalo_mes ///
 		     a_vr_hogar_mes vr_total_mes vr_compra_mes vr_obtenido_mes	   ///
 			 vr_regalo_mes vr_hogar_mes {
 			 
-	bys llave_n16: egen t_`i'=sum(`i')
-	}
+	bys llave_n16: egen t_`i'=total(`i')
+}
+
+* Agregar por tipo de gasto:
+
+foreach type in alimento personal educatio health 						   ///
+				durables insuranc leisure {
+
+	gen t_`type' = a_vr_total if `type' == 1
+	bys llave_n16: egen t_vr_`type'_a = total(t_`type')
+	drop t_`type'
+}
 
 keep if s==1
 
@@ -841,31 +1023,56 @@ rename t_vr_regalo_mes regalo_m
 rename t_vr_hogar_mes hhobtenido_m
 	
 foreach x of varlist ctotal_a ccompra_a obtenido_a hhobtenido_a regalo_a   ///
-					 ctotal_m ccompra_m obtenido_m regalo_m hhobtenido_m {
-					 
-gen `x'_per=`x'/t_personas
+					 ctotal_m ccompra_m obtenido_m regalo_m hhobtenido_m   ///
+					 t_vr_*_a {
+
+	gen `x'_per=`x'/t_personas
 }
 
 *Terminando
-	
 format ctotal_a ccompra_a obtenido_a hhobtenido_a regalo_a ctotal_m 	   ///
-	   ccompra_m obtenido_m regalo_m hhobtenido_m %18.0g
+	   ccompra_m obtenido_m regalo_m hhobtenido_m t_vr_*_a %18.0g
 		
 keep ola consecutivo llave llave_n16 ctotal_a ccompra_a obtenido_a		   ///
-	 hhobtenido_a regalo_a t_personas
+	 hhobtenido_a regalo_a t_personas t_vr_*_a 							   ///
+	 vr_gtos_mensuales vr_gtos_mens_alim
 	
 /* En vez de eliminar la observación de ccompra_a==0 voy a dejar los valores 
   en missing para tener más claro cómo va el merge */
 
 foreach i in ctotal_a obtenido_a hhobtenido_a regalo_a {
-	replace `i'=. if ccompra_a==0
+	//replace `i'=. if ccompra_a==0
 }
-replace ccompra_a=. if ccompra_a==0
+//replace ccompra_a=. if ccompra_a==0
 
 rename ctotal_a consumo_total
 rename ccompra_a consumo_purchased
 rename hhobtenido_a consumo_selfcons
 rename regalo_a consumo_transfers
+
+rename t_vr_*_a consumo_*
+
+*check:
+gen check = consumo_alimento + consumo_personal + consumo_educatio +	   ///
+			consumo_health + consumo_durables + consumo_insuranc +		   ///
+			consumo_leisure
+
+format check %15.0f
+
+assert abs(check - consumo_total) < 20 // 20 pesos
+
+drop check 
+
+gen check2 = vr_gtos_mensuales * 12
+
+gen check3 = vr_gtos_mens_alim * 12
+
+reg consumo_total check2
+reg consumo_alimento check3
+
+drop check* vr_gtos*
+
+gen year = 2016 
 
 ***
 
@@ -873,7 +1080,9 @@ append using `consumo_2013'
 append using `consumo_2010'
 
 foreach i in consumo_total consumo_purchased obtenido_a consumo_transfers  /// 
-			 consumo_selfcons t_personas {
+			 consumo_selfcons t_personas consumo_alimento consumo_personal ///
+			 consumo_educatio consumo_health consumo_insuranc 			   ///
+			 consumo_durables consumo_leisure {
 			 
 		gen `i'_2=`i' if ola==1	
 		bys consecutivo: egen `i'_2010=max(`i'_2)
@@ -890,10 +1099,9 @@ foreach i in 2010 2013 2016 {
 
 	gen perc_purchased_`i'=consumo_purchased_`i'/consumo_total_`i'
 	gen perc_transfers_`i'=consumo_transfers_`i'/consumo_total_`i'
-	gen perc_selfcons_`i'=consumo_transfers_`i'/consumo_total_`i'
+	gen perc_selfcons_`i'=consumo_selfcons_`i'/consumo_total_`i'
 	* consumo total en millones
 	replace consumo_total_`i'=consumo_total_`i'/1000000
-	
 }
 
 cd "$projdir/dta/cln/ELCA"
@@ -904,10 +1112,16 @@ drop _merge
 
 foreach i in 2010 2013 2016 {
 	
-	gen consumo_total_pc_`i'=consumo_total_`i'/numperh_`i'
+	foreach v in consumo_total consumo_alimento	consumo_personal 		   ///
+				 consumo_educatio consumo_health consumo_durables 		   ///
+				 consumo_insuranc consumo_leisure 						   ///
+				 consumo_transfers consumo_purchased consumo_selfcons {
+
+		gen `v'_pc_`i'= `v'_`i' / numperh_`i'
+	}
 }
 
-*
+drop zona // redundant
 
 cd "$projdir/dta/cln/ELCA"
 save "elca_consumption_hhlvl_10_13_16.dta", replace

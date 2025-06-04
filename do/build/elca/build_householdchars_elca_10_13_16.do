@@ -70,7 +70,7 @@ collapse consecutivo llave ola zona numperh /* edad_jh mujer_jh jh_ocupado ///
 append using `Hh_chars_13'
 append using `Hh_chars_10'
 
-foreach i in numperh {
+foreach i in numperh zona {
 	
 		/*edad_jh mujer_jh educ_max hog_edad0_5 hog_edad6_17			   ///
 			 hog_edad18_65 hog_edad65  jh_ocupado jh_desempleado		   ///
@@ -89,6 +89,12 @@ foreach i in numperh {
 }
 
 keep if llave_n16 != . 
+
+keep if zona_2013 != . // drop households that are in 10 and 16 but not in 13
+
+drop llave_ID_lb
+
+
 
 *
 cd "$projdir/dta/cln/ELCA"

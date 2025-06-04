@@ -37,8 +37,20 @@ foreach i of varlist shock_* rural {
 
 drop if llave_n16 == .
 
-merge 1:1 llave_n16 using "vars_elca_private.dta"
+//merge 1:1 llave_n16 using "vars_elca_private.dta"
+// drop if _merge != 3
+//drop _merge 
+
+//rename consumo_total_pc* consumo_total_pc_og* 
+//drop consumo_total_pc* // update with new consumption dta
+
+merge 1:1 llave_n16 using "elca_consumption_hhlvl_10_13_16.dta"
 drop if _merge != 3
+drop _merge 
+
+merge 1:1 llave_n16 using "elca_debts_hhlvl_10_13_16.dta"
+drop if _merge != 3
+drop _merge 
 
 gen rural_2010 = zona_2010 == 2
 
@@ -51,15 +63,24 @@ drop if inlist(., cons_pc_q_2010, cons_pc_q_2013) // 9 obs
 keep llave_n16  llave rural* shock_natdisast* shock_accident_illnss*       ///
 	 shock_lostjob* shock_criminality* shock_deathmember* shock_bankrupcy* ///	
 	 shock_any* cons_pc_q_* consumo_total_pc_*							   ///
-	 familias_accion_2016 familias_accion_2010 familias_accion_2013		   ///
+	 /*familias_accion_2016 familias_accion_2010 familias_accion_2013	   ///
 	 riqueza_pca_2010 riqueza_pca_2013 riqueza_pca_2016 				   ///
-	 migrante_2016 migrante_2013 numperh_2016 numperh_2010 numperh_2013    ///
-	 tiene_credito_2016 tiene_credito_2010 tiene_credito_2013
+	 migrante_2016 migrante_2013*/ numperh_2016 numperh_2010 numperh_2013  ///
+	 /*tiene_credito_2016 tiene_credito_2010 tiene_credito_2013*/		   ///
+	 consumo_alimento_pc_* consumo_personal_pc_* consumo_educatio_pc_*     ///
+	 consumo_durables_pc_* consumo_health_pc_* consumo_insuranc_pc_*       ///
+	 consumo_leisure_pc_* consumo_purchased_pc_* consumo_transfers_pc_*    ///
+	 consumo_selfcons_pc_* debts_dummy_* debts_value_pc_* debts_value*
 
 reshape long rural_ shock_natdisast_ shock_accident_illnss_       		   ///
 	 shock_lostjob_ shock_criminality_ shock_deathmember_ shock_bankrupcy_ ///	
-	 shock_any_ cons_pc_q_ familias_accion_ riqueza_pca_ migrante_		   ///
-	 consumo_total_pc_ numperh_ tiene_credito_, i(llave_n16) j(year)
+	 shock_any_ cons_pc_q_ /*familias_accion_ riqueza_pca_ migrante_*/	   ///
+	 consumo_total_pc_ numperh_ tiene_credito_ 							   ///
+	 consumo_alimento_pc_ consumo_personal_pc_ consumo_educatio_pc_        ///
+	 consumo_durables_pc_ consumo_health_pc_ consumo_insuranc_pc_          ///
+	 consumo_leisure_pc_ consumo_purchased_pc_ consumo_transfers_pc_       ///
+	 consumo_selfcons_pc_ debts_dummy_ debts_value_pc_ debts_value_, 	   ///
+	 i(llave_n16) j(year)
 
 sort llave_n16 year 
 
@@ -77,19 +98,88 @@ xtset llave_n16 year
 gen lcons = log(consumo_total_pc)
 
 gen ldiffcons   = log(consumo_total_pc/L3.consumo_total_pc)
-gen diffrich    = riqueza - L3.riqueza
-gen ldiffnumperh = log(numperh/L3.numperh)
-gen diffcred = tiene_credito - L3.tiene_credito
+gen ldiffcons_ali = log(consumo_alimento_pc/L3.consumo_alimento_pc)
+gen ldiffcons_per = log(consumo_personal_pc/L3.consumo_personal_pc)
+gen ldiffcons_edu = log(consumo_educatio_pc/L3.consumo_educatio_pc)
+gen ldiffcons_hlt = log(consumo_health_pc/L3.consumo_health_pc)
+gen ldiffcons_dur = log(consumo_durables_pc/L3.consumo_durables_pc)
+gen ldiffcons_ins = log(consumo_insuranc_pc/L3.consumo_insuranc_pc)
+gen ldiffcons_lei = log(consumo_leisure_pc/L3.consumo_leisure_pc)
+
+replace consumo_total_pc = consumo_total_pc * 1000000
+
+gen diffcons     = (consumo_total_pc - L3.consumo_total_pc) // / L3.consumo_total_pc
+gen diffcons_ali = (consumo_alimento_pc - L3.consumo_alimento_pc) // / L3.consumo_alimento_pc
+gen diffcons_per = (consumo_personal_pc - L3.consumo_personal_pc) // / L3.consumo_personal_pc
+gen diffcons_edu = (consumo_educatio_pc - L3.consumo_educatio_pc) // / L3.consumo_educatio_pc
+gen diffcons_hlt = (consumo_health_pc - L3.consumo_health_pc) // / L3.consumo_health_pc
+gen diffcons_dur = (consumo_durables_pc - L3.consumo_durables_pc) // / L3.consumo_durables_pc
+gen diffcons_ins = (consumo_insuranc_pc - L3.consumo_insuranc_pc) // / L3.consumo_insuranc_pc
+gen diffcons_lei = (consumo_leisure_pc - L3.consumo_leisure_pc) //  / L3.consumo_leisure_pc
+
+gen diffcons_purch = (consumo_purchased_pc - L3.consumo_purchased_pc) //  / L3.consumo_leisure_pc
+gen diffcons_trans = (consumo_transfers_pc - L3.consumo_transfers_pc) //  / L3.consumo_leisure_pc
+gen diffcons_selfc = (consumo_selfcons_pc - L3.consumo_selfcons_pc) //  / L3.consumo_leisure_pc
+
+gen diffdebtsval = (debts_value_pc - L3.debts_value_pc)
+gen diffdebtsvallvl = (debts_value - L3.debts_value)
+gen diffhasdebt = debts_dummy - L3.debts_dummy
+
+//gen diffrich    = riqueza - L3.riqueza
+//gen ldiffnumperh = log(numperh/L3.numperh)
 egen hhid = group(llave_n16)
 
-eststo m1: reghdfe ldiffcons shock_any, absorb(year rural_baseline) // cons_pc_q_contemp rural)
+/* eststo m1: reghdfe ldiffcons shock_any, absorb(year rural_baseline) // cons_pc_q_contemp rural)
 eststo m2: reghdfe diffrich shock_any, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
 eststo m3: reghdfe migrante shock_any, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
 eststo m4: reghdfe ldiffnumperh shock_any, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
 eststo m5: reghdfe diffcred shock_any, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
 
 esttab m1 m2 m3 m4 m5, keep(shock_any) se star(* 0.1 ** 0.05 *** 0.01) 				///
+	   stats(N, label("Observations"))  */
+
+eststo t1: reghdfe diffcons shock_any, absorb(year rural_baseline) // cons_pc_q_contemp rural)
+eststo t2: reghdfe diffcons_ali shock_any, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+eststo t3: reghdfe diffcons_per shock_any, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+eststo t4: reghdfe diffcons_edu shock_any, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+eststo t5: reghdfe diffcons_hlt shock_any, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+eststo t6: reghdfe diffcons_dur shock_any, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+eststo t7: reghdfe diffcons_ins shock_any, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+eststo t8: reghdfe diffcons_lei shock_any, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+
+esttab t1 t2 t3 t4 t5 t6 t7 t8, keep(shock_any) se star(* 0.1 ** 0.05 *** 0.01) 				///
 	   stats(N, label("Observations")) 
+
+eststo t9:  reghdfe diffcons shock_any, absorb(year rural_baseline) // cons_pc_q_contemp rural)
+eststo t10: reghdfe diffcons_purch shock_any, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+eststo t11: reghdfe diffcons_trans shock_any, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+eststo t12: reghdfe diffcons_selfc shock_any, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+eststo t13: reghdfe diffhasdebt shock_any, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+eststo t14: reghdfe diffdebtsval shock_any, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+
+esttab t9 t10 t11 t12 t13 t14, keep(shock_any) se star(* 0.1 ** 0.05 *** 0.01) 				///
+	   stats(N, label("Observations")) 
+
+eststo d1: reghdfe diffdebtsval shock_any, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+eststo d2: reghdfe diffdebtsval shock_accident_illnss, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+eststo d3: reghdfe diffdebtsval shock_lostjob, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+eststo d4: reghdfe diffdebtsval shock_natdisast, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+eststo d5: reghdfe diffdebtsval shock_criminality, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+
+esttab d1 d2 d3 d4 d5, keep(shock_*) se star(* 0.1 ** 0.05 *** 0.01) 				///
+	   stats(N, label("Observations")) 
+
+gen ldiffdebtsval = log(debts_value_pc/L3.debts_value_pc)
+
+eststo ld1: reghdfe diffhasdebt shock_any, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+eststo ld2: reghdfe diffhasdebt shock_accident_illnss, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+eststo ld3: reghdfe diffhasdebt shock_lostjob, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+eststo ld4: reghdfe diffhasdebt shock_natdisast, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+eststo ld5: reghdfe diffhasdebt shock_criminality, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
+
+esttab ld1 ld2 ld3 ld4 ld5, keep(shock_*) se star(* 0.1 ** 0.05 *** 0.01) 				///
+	   stats(N, label("Observations")) 
+
 
 eststo n1: reghdfe ldiffcons shock_natdisast, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
 eststo n2: reghdfe diffrich shock_natdisast, absorb(year rural_baseline)  // cons_pc_q_contemp rural)
