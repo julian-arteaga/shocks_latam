@@ -1,4 +1,3 @@
-
 * ----------------------------------------------------------------------------*
 
 * Shocks LatAm
@@ -7,9 +6,9 @@
 
 * ----------------------------------------------------------------------------*
 
-* Compute shock incidence summary statistics across surveys
+* Incidence figures tables summary stats and misc.
 
-* -------------------------------------
+* ---------------------------
  
 * Country (survey) average incidence by shock type
 
@@ -38,7 +37,6 @@ append using "ltslv_yr_incidence_11_13.dta"
 
 replace cty = "SLV" if cty == ""
 
-
 rename mean_shock_accident_illnss mean_shock_health
 rename m_shock_accident_illnss m_shock_health
 rename shock_accident_illnss shock_health 
@@ -65,15 +63,73 @@ keep cty allyr_incid_any allyr_incid_health allyr_incid_lostjob  		   ///
 order cty allyr_incid_any allyr_incid_health allyr_incid_lostjob  		   ///
 		  allyr_incid_natdisast allyr_incid_criminality 
 
+drop if cty == "COL-DIEM"
+
+replace cty = "COL" if cty == "COL-ELCA"
+
+* Manually add CS countries from LT tables:
+
+set obs 11
+
+replace cty = "CHL" in 8 
+replace allyr_incid_health    = .4895456 in 8 
+replace allyr_incid_natdisast = .1039423 in 8 
+
+replace cty = "ECU" in 9 
+replace allyr_incid_lostjob      = .19  in 9
+replace allyr_incid_natdisast   = .1863 in 9 
+replace allyr_incid_criminality = .0416 in 9
+replace allyr_incid_health      = .1436 in 9 
+
+replace cty = "DOM" in 10 
+replace allyr_incid_lostjob     = .0985 in 10
+replace allyr_incid_natdisast   = (.0143 + 0.0023) in 10 // add fire 
+replace allyr_incid_criminality = .0416 in 10
+replace allyr_incid_health      = .0428 in 10 
+
+drop allyr_incid_any
+
 cd "$projdir/out/allcty"
 estimates clear 
 
-local c1 allyr_incid_any(fmt(3)) allyr_incid_health allyr_incid_lostjob  			   
+replace cty = "z_Average" in 11 
+
+foreach var of varlist allyr_inc* {
+
+	egen m_`var' = mean(`var')
+	replace `var' = m_`var' in 11
+	drop m_`var'
+}
+
+gen survey_type = inlist(cty, "COL", "MEX", "PER", "SLV", "HTI")
+label define svtype 1 "Panel" 0 "Cross Section"
+label values survey_type svtype 
+
+replace survey_type = . if cty == "z_Average"
+
+gen years = "2010, 2013, 2016" if cty == "COL"
+replace years = "2021-2023" if inlist(cty, "GTM", "HND", "HTI")
+replace years = "2002, 2005, 2009" if cty == "MEX"
+replace years = "2007-2023" if cty == "PER"
+replace years = "2011, 2013" if cty == "SLV"
+replace years = "2022" if cty == "CHL"
+replace years = "2005" if cty == "ECU"
+replace years = "2004" if cty == "DOM"
+replace years = "-" if cty == "Average"
+
+local c1 survey_type allyr_incid_health allyr_incid_lostjob  			   
 local c2 allyr_incid_natdisast allyr_incid_criminality
-estpost tabstat allyr_incid_*, by(cty)
+
+sort cty 
+replace cty = "Avg." if cty == "z_Average"
+
+estpost tabstat survey_type allyr_incid_*, by(cty)
+
 esttab using "shock_incidence_allcty.tex", cells("`c1' `c2'")  	   	   	   ///
-	noobs nonum collabels("All shocks" "Health" "Employment"			   ///
-						  "Nat. Disast." "Criminality") replace
+	noobs nonum collabels("Survey Type" "Health" "Employment"			   				   ///
+						  "Nat. Disast." "Criminality") replace varlabels(`varlabels')
+
+order cty survey_type years *_natdisast *_health *_lostjob *_criminality
 
  * ----------------------------------------------
 
@@ -125,18 +181,6 @@ bys cty q shock: keep if _n == 1 // drop rural/urban distinction
 sort cty shock q
 bys cty shock: egen shock_q1 = max(cond(q == 1, bsline_sse_shock, .))
 gen bsline_sse_shock_relq1 = (bsline_sse_shock - shock_q1) * 100
-
-preserve 
-
-keep if inlist(cty, "COL", "MEX", "PER", "HTI", "SLV")
-bys q shock: egen mean_shock_relq1 = mean(bsline_sse_shock_relq1)
-bys q shock: keep if _n == 1
-
-sort shock q
-br shock q mean_*
-restore
-
-br if shock == "any"
 
 * -------------------------------------
 

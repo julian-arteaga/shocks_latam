@@ -11,29 +11,7 @@
 * -----------------
 
 cd "$projdir/dta/cln/ENAHO"
-use "enaho_shock_prevalence_hhlvl_13_23.dta", clear
-
-drop if inlist(., shock_lostjob, shock_accident_illnss,    				   ///
-				  shock_criminality, shock_natdisast, shock_deathmember)
-				  
-replace shock_accident_illnss = 										    ///
-		inlist(1, shock_accident_illnss, shock_deathmember)
-
-drop shock_deathmember
-
-gen shock_any = shock_natdisast + shock_accident_illnss  		   		   ///
-	    	   + shock_lostjob + shock_criminality > 0		
-
-foreach var of varlist shock_* {
-
-	bys year: egen mean_`var' = mean(`var')
-}
-
-collapse mean_* shock_*, by(year rural)
-
-* -----------------
-
-cd "$projdir/out/enaho"
+use "enaho_yr_incidence_13_23.dta", clear
 
 scatter mean_shock_natdisast mean_shock_accident_illnss mean_shock_lostjob ///
 	    mean_shock_criminality 					    					   ///
@@ -43,6 +21,7 @@ scatter mean_shock_natdisast mean_shock_accident_illnss mean_shock_lostjob ///
 	 		   4 "Criminality") col(1))   		   						   ///
 	 	ytit("Yearly Incidence") xtit("")
 
+cd "$projdir/out/enaho"
 graph export "enaho_shocks_incidence.png", replace
 
 twoway connected mean_shock_any year if rural == 1, 					   ///		
@@ -57,6 +36,7 @@ twoway connected mean_shock_any year if rural == 1, 					   ///
 					3 "Any shock (urban)"))   							   ///
 	 	ytit("Yearly Incidence") xtit("")
 
+cd "$projdir/out/enaho"
 graph export "enaho_anyshock_incidence.png", replace
 
 twoway scatter mean_shock_any year if rural == 1, 						   ///

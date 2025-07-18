@@ -11,67 +11,114 @@
 cd "$projdir/dta/cln/ENAHO"
 use "enaho_hhchars_shock_panel.dta", clear
 
-gen country = "PER"
-gen cty = "Peru"
+gen cty = "PER"
 
 cd "$projdir/dta/cln/ELCA"
-append using "elca_hhchars_shock_panel.dta"
+append using "elca_hhpanel_10_13_16.dta"
 
-replace country = "COL" if country == ""
-replace cty = "Colombia" if cty == ""
+replace cty = "COL" if cty == ""
 
 cd "$projdir/dta/cln/ENNVIH"
-append using "ennvih_hhchars_shock_panel.dta"
+append using "ennvih_hhpanel_02_05_09.dta" 
 
-replace country = "MEX" if country == ""
-replace cty = "Mexico" if cty == ""
+replace cty = "MEX" if cty == ""
+
+cd "$projdir/dta/cln/LTSLV"
+append using "ltslv_hhpanel_11_13.dta" 
+
+replace cty = "SLV" if cty == ""
+
+cd "$projdir/dta/cln/FAODIEM_HTI"
+append using "faodiem_HTI_hhpanel_r3r6.dta" 
+
+replace cty = "HTI" if cty == ""
+
+gen date = dofy(year)
+
+bys round: egen med_date = median(round_date)
+
+replace date = med_date if year == .
+
+gen yq = qofd(date)
+format yq %tq
+sort yq cty
+
+tab yq cty
+
+rename shock_accident_illnss shock_health 
+
+gen percses_baseline = percexp_baseline 
+
+replace percses_baseline = percinc_baseline if percexp_baseline == . 
+
+drop if  percses_baseline == .
+
+* Express all in 2016 dollars:
+
+foreach var of varlist percses_baseline {
+    
+    replace `var' = `var' if cty == "SAL" // Really need to check this
+    replace `var' = (`var' / 57.210) * 4 if cty == "HTI" // make yearly
+    replace `var' = (`var' / 3.307) * 12    if cty == "PER" // also make yearly
+	replace `var' = `var' / 17.35290 if cty == "MEX"
+	replace `var' = `var' / 3149.47 if cty == "COL"
+}
+
+
+keep cty yq shock_any shock_lostjob shock_health shock_natdisast shock_crim /// 
+     percses_baseline rural_baseline 
+
+replace rural_baseline = 1 if cty == "HTI"
+replace rural_baseline = 0 if cty == "SLV"
+
+gen logpercses_baseline = log(percses_baseline)
 
 * -------------------------------------
 
-egen cty_id =group(country)
-gen logpercexp_baseline = log(percexp_baseline)
+egen cty_id =group(cty)
 
-eststo m1: reg shock_any logpercexp_baseline 
-eststo m2: reg shock_any logpercexp_baseline i.cty_id i.year
-eststo m3: reg shock_any logpercexp_baseline i.cty_id i.year rural_baseline
+eststo m1: reg shock_any logpercses_baseline 
+eststo m2: reg shock_any logpercses_baseline i.cty_id i.yq
+eststo m3: reg shock_any logpercses_baseline i.cty_id i.yq rural_baseline
 
-eststo m4: reg shock_any logpercexp_baseline i.cty_id i.year if rural_baseline == 0
-eststo m5: reg shock_any logpercexp_baseline i.cty_id i.year if rural_baseline == 1
+eststo m4: reg shock_any logpercses_baseline i.cty_id i.yq if rural_baseline == 0
+eststo m5: reg shock_any logpercses_baseline i.cty_id i.yq if rural_baseline == 1
 
-esttab m1 m2 m3 m4 m5, keep(logpercexp_baseline) se star(* 0.1 ** 0.05 *** 0.01) 				///
+esttab m1 m2 m3 m4 m5, keep(logpercses_baseline) se star(* 0.1 ** 0.05 *** 0.01) 				///
 	   stats(N, label("Observations")) 
+
 * Run regressions and store estimates
-eststo m1: reg shock_any logpercexp_baseline
+eststo m1: reg shock_any logpercses_baseline
 estadd local cty_FE "No"
 estadd local year_FE "No"
 estadd local zone_FE "No"
 
-eststo m2: reg shock_any logpercexp_baseline i.cty_id i.year
+eststo m2: reg shock_any logpercses_baseline i.cty_id i.yq
 estadd local cty_FE "Yes"
 estadd local year_FE "Yes"
 estadd local zone_FE "No"
 
-eststo m3: reg shock_any logpercexp_baseline i.cty_id i.year rural_baseline
+eststo m3: reg shock_any logpercses_baseline i.cty_id i.yq rural_baseline
 estadd local cty_FE "Yes"
 estadd local year_FE "Yes"
 estadd local zone_FE "Yes"
 
-eststo m4: reg shock_any logpercexp_baseline i.cty_id i.year if rural_baseline == 0
+eststo m4: reg shock_any logpercses_baseline i.cty_id i.yq if rural_baseline == 0
 estadd local cty_FE "Yes"
 estadd local year_FE "Yes"
 estadd local zone_FE "No"
 
-eststo m5: reg shock_any logpercexp_baseline i.cty_id i.year if rural_baseline == 1
+eststo m5: reg shock_any logpercses_baseline i.cty_id i.yq if rural_baseline == 1
 estadd local cty_FE "Yes"
 estadd local year_FE "Yes"
 estadd local zone_FE "No"
 
 cd "$projdir/out/"
-esttab m1 m2 m3 m4 m5 using "prob_anyshock_logpercexp.tex", 			   ///
-    keep(logpercexp_baseline) se star(* 0.1 ** 0.05 *** 0.01) 			   ///
+esttab m1 m2 m3 m4 m5 using "prob_anyshock_logpercses.tex", 			   ///
+    keep(logpercses_baseline) se star(* 0.1 ** 0.05 *** 0.01) 			   ///
     mtitle("Any shock" "Any shock" "Any shock" 							   ///
            "Any shock - Urban" "Any shock - Rural") 				       ///
-    varlabels(logpercexp_baseline "Baseline Household Expenditure") 	   ///
+    varlabels(logpercses_baseline "Baseline Household SES") 	           ///
     stats(cty_FE year_FE zone_FE N, 									   ///
           labels("Country Fixed Effects" 								   ///
                  "Year Fixed Effects" 									   ///
@@ -82,81 +129,80 @@ esttab m1 m2 m3 m4 m5 using "prob_anyshock_logpercexp.tex", 			   ///
 
 estimates clear
 
-eststo a1: reg shock_any logpercexp_baseline 
-eststo a2: reg shock_any logpercexp_baseline i.cty_id i.year
-eststo a3: reg shock_any logpercexp_baseline i.cty_id i.year rural_baseline
+eststo a1: reg shock_any logpercses_baseline 
+eststo a2: reg shock_any logpercses_baseline i.cty_id i.yq
+eststo a3: reg shock_any logpercses_baseline i.cty_id i.yq rural_baseline
 
-eststo b1: reg shock_lostjob logpercexp_baseline 
-eststo b2: reg shock_lostjob logpercexp_baseline i.cty_id i.year
-eststo b3: reg shock_lostjob logpercexp_baseline i.cty_id i.year rural_baseline
+eststo b1: reg shock_lostjob logpercses_baseline 
+eststo b2: reg shock_lostjob logpercses_baseline i.cty_id i.yq
+eststo b3: reg shock_lostjob logpercses_baseline i.cty_id i.yq rural_baseline
 
-eststo c1: reg shock_accident_illnss logpercexp_baseline 
-eststo c2: reg shock_accident_illnss logpercexp_baseline i.cty_id i.year
-eststo c3: reg shock_accident_illnss logpercexp_baseline i.cty_id i.year rural_baseline
+eststo c1: reg shock_health logpercses_baseline 
+eststo c2: reg shock_health logpercses_baseline i.cty_id i.yq
+eststo c3: reg shock_health logpercses_baseline i.cty_id i.yq rural_baseline
 
-eststo d1: reg shock_criminality logpercexp_baseline 
-eststo d2: reg shock_criminality logpercexp_baseline i.cty_id i.year
-eststo d3: reg shock_criminality logpercexp_baseline i.cty_id i.year rural_baseline
+eststo d1: reg shock_criminality logpercses_baseline 
+eststo d2: reg shock_criminality logpercses_baseline i.cty_id i.yq
+eststo d3: reg shock_criminality logpercses_baseline i.cty_id i.yq rural_baseline
 
-eststo e1: reg shock_natdisast logpercexp_baseline 
-eststo e2: reg shock_natdisast logpercexp_baseline i.cty_id i.year
-eststo e3: reg shock_natdisast logpercexp_baseline i.cty_id i.year rural_baseline
+eststo e1: reg shock_natdisast logpercses_baseline 
+eststo e2: reg shock_natdisast logpercses_baseline i.cty_id i.yq
+eststo e3: reg shock_natdisast logpercses_baseline i.cty_id i.yq rural_baseline
 
 coefplot ///
-    (a1, rename(logpercexp_baseline = "Any Shock") ///
+    (a1, rename(logpercses_baseline = "Any Shock") ///
         offset(-0.2) mcolor(black) ///
         ciopts(lcolor(black))) ///
-    (a2, rename(logpercexp_baseline = "Any Shock") ///
+    (a2, rename(logpercses_baseline = "Any Shock") ///
         label("any_shock") offset(0) mcolor(stblue) ///
         ciopts(lcolor(stblue))) ///
-    (a3, rename(logpercexp_baseline = "Any Shock") ///
+    (a3, rename(logpercses_baseline = "Any Shock") ///
         label("any_shock") offset(0.2) mcolor(stred) ///
         ciopts(lcolor(stred))) ///
-    (b1, rename(logpercexp_baseline = "Employment Shock") ///
+    (b1, rename(logpercses_baseline = "Employment Shock") ///
         label("Employment Shock") offset(-0.2) mcolor(black) ///
         ciopts(lcolor(black))) ///
-    (b2, rename(logpercexp_baseline = "Employment Shock") ///
+    (b2, rename(logpercses_baseline = "Employment Shock") ///
         label("shock_lostjob") offset(0) mcolor(stblue) ///
         ciopts(lcolor(stblue))) ///
-    (b3, rename(logpercexp_baseline = "Employment Shock") ///
+    (b3, rename(logpercses_baseline = "Employment Shock") ///
         label("shock_lostjob") offset(0.2) mcolor(stred) ///
         ciopts(lcolor(stred))) ///
-    (c1, rename(logpercexp_baseline = "Health Shock") ///
+    (c1, rename(logpercses_baseline = "Health Shock") ///
         label("shock_health") offset(-0.2) mcolor(black) ///
         ciopts(lcolor(black))) ///
-    (c2, rename(logpercexp_baseline = "Health Shock") ///
+    (c2, rename(logpercses_baseline = "Health Shock") ///
         label("shock_health") offset(0) mcolor(stblue) ///
         ciopts(lcolor(stblue))) ///
-    (c3, rename(logpercexp_baseline = "Health Shock") ///
+    (c3, rename(logpercses_baseline = "Health Shock") ///
         label("shock_health") offset(0.2) mcolor(stred) ///
         ciopts(lcolor(stred))) ///
-    (d1, rename(logpercexp_baseline = "Criminality") ///
+    (d1, rename(logpercses_baseline = "Criminality") ///
         label("shock_criminality") offset(-0.2) mcolor(black) ///
         ciopts(lcolor(black))) ///
-    (d2, rename(logpercexp_baseline = "Criminality") ///
+    (d2, rename(logpercses_baseline = "Criminality") ///
         label("shock_criminality") offset(0) mcolor(stblue) ///
         ciopts(lcolor(stblue))) ///
-    (d3, rename(logpercexp_baseline = "Criminality") ///
+    (d3, rename(logpercses_baseline = "Criminality") ///
         label("shock_criminality") offset(0.2) mcolor(stred) ///
         ciopts(lcolor(stred))) ///
-    (e1, rename(logpercexp_baseline = "Nat. Disaster") ///
+    (e1, rename(logpercses_baseline = "Nat. Disaster") ///
         label("shock_natdisast") offset(-0.2) mcolor(black) ///
         ciopts(lcolor(black))) ///
-    (e2, rename(logpercexp_baseline = "Nat. Disaster") ///
+    (e2, rename(logpercses_baseline = "Nat. Disaster") ///
         label("shock_natdisast") offset(0) mcolor(stblue) ///
         ciopts(lcolor(stblue))) ///
-    (e3, rename(logpercexp_baseline = "Nat. Disaster") ///
+    (e3, rename(logpercses_baseline = "Nat. Disaster") ///
         label("shock_natdisast") offset(0.2) mcolor(stred) ///
         ciopts(lcolor(stred))), ///
-    keep(logpercexp_baseline) xline(0, lcolor(black%50) lpattern(dash))    ///
+    keep(logpercses_baseline) xline(0, lcolor(black%50) lpattern(dash))    ///
     legend(order(2 "No FE" 												   ///
 				 4 "Country and Year FE" 								   ///
 				 6 "Country, Year, and Zone FE") pos(6) row(1))			   ///
-	
+	xtitle("{&Delta} Shock Probability")
 
 cd "$projdir/out/"
-
-graph export "coefplot_probshock_logpercexp_pre.png", replace
+graph export "coefplot_probshock_logpercses_pre.png", replace
 
 * -------------------------------------
 
