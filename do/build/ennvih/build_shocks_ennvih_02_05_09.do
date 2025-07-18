@@ -72,8 +72,10 @@ gen folio_aux = string(folio, "%08.0f")
 drop folio 
 rename folio_aux folio
 
-tempfile shocks_2002
-save `shocks_2002' 
+rename folio folio_02
+
+cd "$projdir/dta/cln/ENNVIH"
+save "ennvih_shocks_hhlvl_02.dta", replace
 
 * -------------------------------------
 
@@ -142,8 +144,10 @@ gen year = 2005
 
 keep folio year shock* rural
 
-tempfile shocks_2005
-save `shocks_2005'
+rename folio folio_05
+
+cd "$projdir/dta/cln/ENNVIH"
+save "ennvih_shocks_hhlvl_05.dta", replace
 
 * -------------------------------------
 
@@ -215,33 +219,9 @@ gen year = 2009
 
 keep folio year shock* rural
 
-rename folio folio09
-
-gen folio_1 = substr(folio09, 1, 6)
-
-gen folio_2 = substr(folio09, 7, 2)
-
-gen folio_3 = substr(folio09, 9, 2)
-
-gen folio = folio_1 + folio_3
-
-append using `shocks_2005'
-append using `shocks_2002'
-
-bys folio year: gen numdup = _N
-drop if numdup > 1 & folio_2 == "CP" // 'new' household included in 2009
-
-drop folio_* folio09 numdup
-
-sort folio year 
-
-reshape wide rural shock_accident_illnss shock_lostjob 					   ///
-			 shock_natdisast shock_criminality shock_deathmember,		   ///
-			  i(folio) j(year)
-
-compress
+rename folio folio_09
 
 cd "$projdir/dta/cln/ENNVIH"
-save "ennvih_shock_prevalence_hhlvl_02_09.dta", replace
+save "ennvih_shocks_hhlvl_09.dta", replace
 
 * -------------------------------------------------------------------

@@ -93,24 +93,28 @@ gen elca_hh = CONSECUTIVO_DANE_2010 != "" |  ///
 
 * Harmonize shock categories:
 
-// gen shock_lostjob
+replace shock_lostjob = inlist(1, shock_lostjob, shock_bankrupcy)
 
-// gen shock_bankrupcy 	
-
-// gen shock_accident_illnss  
-
-// gen shock_abandonmember
+replace shock_accident_illnss = inlist(									   ///
+	1, shock_deathmember, shock_accident_illnss)
 
 gen shock_criminality = inlist(											   ///
-	1, shock_robbery, shock_theftlostassets, shock_violence				   ///
-)
+	1, shock_robbery, shock_theftlostassets, shock_violence)
 
 gen shock_natdisast = inlist(1, shock_earthquake, shock_drought, 		   ///
-							    shock_floodlandslide, shock_failharvest)
+							    shock_floodlandslide)
 
-gen urban = CLASE == 1
+gen rural = CLASE != 1
+
+drop transfer* 
+
+keep CONSECUTIVO_DANE_2010-CLASE rural elca_hh							   ///
+	 shock_accident_illnss shock_criminality shock_natdisast shock_lostjob
+
+gen shock_any = shock_natdisast + shock_accident_illnss  		   		   ///
+	    	   + shock_lostjob + shock_criminality > 0 	
 
 cd "$projdir/dta/cln/ELCA"
-save "elca_shock_prevalence_hhlvl_19.dta", replace
+save "elca_shocks_hhlvl_19.dta", replace
 
 * -------------------------------------------------------------------

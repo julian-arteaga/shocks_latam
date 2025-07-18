@@ -6,30 +6,19 @@
 
 * ----------------------------------------------------------------------------*
 
-* Compute ENNVIH concumption level 2002-2005-2009
+* Compute ENNVIH consumption level 2002-2005-2009
 
 * -----------------
 
 * [2002]
 
-* Num household members: 
-use "$projdir/dta/src/ENNVIH/ehh02dta_all/ehh02dta_b3a/iiia_portad.dta", clear
-
-bys folio: gen mieperho = _N 
-
-bys folio: keep if _n == 1 
-
-keep folio mieperho 
-
-tempfile mieperho 
-save `mieperho'
-
 * Consumption 0:  
 use "$projdir/dta/src/ENNVIH/ehh02dta_all/ehh02dta_b1/i_cs.dta", clear
 
-
 * --------------
 * Food expenses:
+
+* Goods bought weekly:
 
 foreach x in a b c d {
 
@@ -48,7 +37,7 @@ foreach x in a b c d {
 
 		gen monthval_cs_`x'`i' = monthval_cs02_`x'`i' + monthval_cs04_`x'`i'
 
-		replace monthval_cs_`x'`i' = . if monthval_cs_`x'`i' >= 50000
+		replace monthval_cs_`x'`i' = . if monthval_cs_`x'`i' >= 40000
 	}
 }
 
@@ -68,7 +57,7 @@ gen monthval_cs04_e13 = cs04e_132 * 4 if cs04e_132 != .
 
 foreach var of varlist monthval_cs02_e* monthval_cs04_e* {
 
-	replace `var' = . if `var' >= 50000
+	replace `var' = . if `var' >= 40000
 }
 
 * Goods that are asked at both weekly and monthly frequency:
@@ -105,14 +94,15 @@ gen monthval_cs04_e2  = cs04e_22  * 4 if cs04e_22  != . // transport transf
 foreach var of varlist cs16a_2 cs16b_2 cs16c_2 cs16d_2 cs16e_2 	           ///
 							   cs16f_2 cs16g_2 cs16h_2 cs16i_2 {
 
-	replace `var' = . if `var' >= 50000
+	replace `var' = . if `var' >= 40000
 }
 
 egen monthval_pers_purch = rowtotal(cs16a_2 cs16b_2 cs16c_2 cs16d_2 	   ///
 									cs16e_2 cs16h_2 cs16i_2 			   ///
 									monthval_cs02_e1 monthval_cs02_e2)
 
-egen monthval_leis = rowtotal(cs16f_2 cs16g_2)
+egen monthval_leis_purch = rowtotal(cs16f_2 cs16g_2)
+gen monthval_leis_transf = 0 
 
 * Gifted/in kind payment goods
 gen monthval_perstransf = 0 
@@ -120,7 +110,11 @@ replace monthval_perstransf = cs18_2 if cs18_2 != .
 
 gen monthval_pers = monthval_pers_purch + monthval_perstransf
 
-keep folio monthval_food* monthval_pers* monthval_leis 
+gen monthval_leis = monthval_leis_purch
+
+keep folio monthval_food* monthval_pers* monthval_leis*
+
+gen folio_02 = string(folio, "%08.0f")
 
 tempfile consumption_0 
 save `consumption_0'
@@ -148,13 +142,18 @@ foreach x in a b c d e f g h {
 
 egen monthval_pers_purch2 = rowtotal(									   ///
 	monthval_cs22_a monthval_cs22_b monthval_cs22_c monthval_cs22_d 	   ///
-	monthval_cs22_e monthval_cs22_f monthval_cs22_g monthval_cs22_h)
+	monthval_cs22_e monthval_cs22_f monthval_cs22_h)
 
 egen monthval_pers_transf2 = rowtotal(									   ///
 	monthval_cs24_a monthval_cs24_b monthval_cs24_c monthval_cs24_d 	   ///
-	monthval_cs24_e monthval_cs24_f monthval_cs24_g monthval_cs24_h)
+	monthval_cs24_e monthval_cs24_f monthval_cs24_h)
 
 gen monthval_pers2 = monthval_pers_purch2 + monthval_pers_transf2
+
+egen monthval_hlth_purch2 = rowtotal(monthval_cs22_g)
+egen monthval_hlth_transf2 = rowtotal(monthval_cs24_g)
+
+gen monthval_hlth2 = monthval_hlth_purch2 + monthval_hlth_transf2
 
 * --------------
 * Durable goods
@@ -174,6 +173,7 @@ replace monthval_durab_transf = cs29_2 / 12 if cs29_2 != .
 egen monthval_school_purch = rowtotal(cs34a_12 cs34a_22 cs34a_32 		   ///
 							  	  cs35a_12 cs35a_22 cs35a_32 			   ///
 							 	  cs36a_12 cs36a_22 cs36a_32)
+								  
 replace monthval_school_purch = monthval_school / 12
 
 gen monthval_school = monthval_school_purch 
@@ -181,34 +181,31 @@ gen monthval_school = monthval_school_purch
 gen monthval_durab = monthval_durab_purch + monthval_durab_transf
 
 keep folio monthval_pers2* monthval_durab* monthval_school* 			   ///
-		   monthval_pers_purch2 monthval_pers_transf2
+		   monthval_pers_purch2 monthval_pers_transf2					   ///
+		   monthval_hlth_purch2 monthval_hlth_transf2
+
+gen folio_02 = string(folio, "%08.0f")
 
 tempfile consumption_1 
 save `consumption_1'
 
 * -----------------
 
-use `mieperho', clear 
-
-merge 1:1 folio using `consumption_0'
+merge 1:1 folio_02 using `consumption_0'
+drop if _merge != 3
 drop _merge 
-
-merge 1:1 folio using `consumption_1'
-drop _merge 
-
-gen year = 2002
-
-rename folio folio02
-gen str8 folio = string(folio02, "%08.0f")
 
 * Merge-in health expenditures:
 cd "$projdir/dta/cln/ENNVIH"
-merge 1:1 folio using "ennvih_healthexp_hhlvl_02.dta"
-drop if _merge == 2 
-
+merge 1:1 folio_02 using "ennvih_healthexp_hhlvl_02.dta"
+drop if _merge == 2
 replace exp_health_yearly = 0 if _merge == 1
+drop _merge year
 
-gen consumo_health = exp_health_yearly
+gen consumo_health_purch  = exp_health_yearly + (monthval_hlth_purch2 * 12)
+gen consumo_health_transf =  monthval_hlth_transf2
+
+gen consumo_health = consumo_health_purch + consumo_health_transf
 
 gen consumo_alimento = monthval_food * 12
 gen consumo_personal = (monthval_pers + monthval_pers2) * 12
@@ -216,30 +213,39 @@ gen consumo_educatio = monthval_school * 12
 gen consumo_durables = monthval_durab * 12
 gen consumo_leisure  = monthval_leis * 12
 
-gen consumo_purchased = consumo_health +								   ///
+gen consumo_purchased = consumo_health_purch +							   ///
 					    (monthval_foodpurch + monthval_pers_purch + 	   ///
 					    monthval_pers_purch2 + monthval_durab_purch +	   ///
-						monthval_school_purch ) * 12 	
+						monthval_leis_purch + monthval_school_purch) * 12 	
 
 gen consumo_transfers = (monthval_perstransf + monthval_pers_transf2 +	   ///
-				     	 monthval_durab_transf + monthval_foodtransf) * 12
+				     	 monthval_durab_transf + monthval_foodtransf +     ///
+						 consumo_health_transf) * 12
 
 gen hh_totexp = consumo_alimento + consumo_personal + consumo_health +	   ///
-			    consumo_leisure + consumo_durables + consumo_educatio
-
-gen percexp = hh_totexp / mieperho 
-
-foreach v in consumo_alimento consumo_personal 	 		   				   ///
-			 consumo_educatio consumo_health consumo_durables 		   	   ///
-			 consumo_leisure consumo_transfers consumo_purchased {
-
-	gen `v'_pc = `v' / mieperho
-}
-
+			    consumo_leisure + consumo_durables + consumo_educatio     
+				
 label var hh_totexp "Yearly household consumption (nominal pesos)"
-label var percexp "Yearly household consumption per capita (nominal pesos)"
 
-keep folio folio02 mieperho year consumo_* percexp hh_totexp
+* On consumption source: a few obs have a discrepancy between total exp 
+* and the sum of consumption sources (purchased + transfers). Assume
+* differenece is transfers:
+
+gen check = consumo_purch + consumo_transfers
+gen diff = hh_totexp - check
+
+replace consumo_transfers = consumo_transfers + diff if abs(diff) > 20 
+
+replace consumo_transfers = 0 if consumo_transfers < 0 // 0 obs
+
+gen check2 = consumo_purchased + consumo_transfers 
+assert abs(check2 - hh_totexp) < 20 if check2 != . // 29 obs miss
+
+gen year = 2002 
+
+keep folio_02 year consumo_* hh_totexp
+
+drop consumo_health_purch consumo_health_transf
 
 compress 
 

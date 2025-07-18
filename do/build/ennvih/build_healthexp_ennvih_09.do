@@ -112,6 +112,8 @@ gen exp_health_yearly = exp_health_monthly * 12
 
 gen year = 2009
 
+gen folio_09 = folio
+
 compress
 
 cd "$projdir/dta/cln/ENNVIH"

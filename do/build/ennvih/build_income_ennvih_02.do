@@ -254,8 +254,9 @@ label var percinc "Yearly household income per capita (nominal pesos)"
 
 gen year = 2002 
 
-rename folio folio02
-gen str8 folio = string(folio02, "%08.0f")
+gen folio_02 = string(folio, "%08.0f")
+
+keep folio_02 year hh_totincome 
 
 compress 
 

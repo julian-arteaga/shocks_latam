@@ -92,32 +92,6 @@ sum nonlab_inc_yr, d
 tempfile nonlab_inc
 save `nonlab_inc'
 
-* Non labor income - individual level (IN):
-use "$projdir/dta/src/ENNVIH/ehh09dta_all/ehh09dta_b3a/iiia_iin.dta", clear
-
-keep folio *_2 *_21
-
-egen nonlab_inc_yr = rowtotal(											   ///
-	 iin01a2_2 iin01a3_2 iin01a5_2 iin01a6_2 iin01a7_2 iin01a9_2 		   ///
-	 iin01a10_21 iin01a11_2 iin01a12_2 iin01a13_2 iin01b_2 iin01c_2 	   ///
-	 iin01d_2 iin01e_2 iin01f_2 iin01g_2 iin01h_2 iin01i_2 iin01j_2 	   ///
-	 iin01k_21) 
-  // PROGRESA data excluded from the public datasets
-  // eg https://www.econstor.eu/bitstream/10419/103004/1/796392285.pdf
-  // in01a4_2: Crédito a la palabra program no longer asked
-  // in01a8_2: fondo para micro pequeña y mediana empresa no longer asked
-
-bys folio: egen yearly_nonlaborearnings = total(nonlab_inc_yr)
-
-bys folio: keep if _n == 1 
-
-keep folio yearly_nonlaborearnings
-
-sum yearly_nonlaborearnings, d
-
-tempfile nonlab_inc
-save `nonlab_inc'
-
 * Wage income:
 use "$projdir/dta/src/ENNVIH/ehh09dta_all/ehh09dta_b3a/iiia_tb.dta", clear 
 
@@ -277,6 +251,10 @@ label var hh_totincome "Yearly household income (nominal pesos)"
 label var percinc "Yearly household income per capita (nominal pesos)"
 
 gen year = 2009
+
+rename folio folio_09
+
+keep folio_09 year hh_totincome 
 
 compress 
 

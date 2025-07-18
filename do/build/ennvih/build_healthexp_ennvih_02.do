@@ -114,10 +114,10 @@ gen exp_health_yearly = exp_health_monthly * 12
 
 gen year = 2002 
 
-rename folio folio02
-gen str8 folio = string(folio02, "%08.0f")
+gen str8 folio_02 = string(folio, "%08.0f")
 
 cd "$projdir/dta/cln/ENNVIH"
 save "ennvih_healthexp_hhlvl_02.dta", replace
 
 * -------------------------------------------------------------------
+

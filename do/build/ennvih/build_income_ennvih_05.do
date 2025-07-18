@@ -250,7 +250,9 @@ label var percinc "Yearly household income per capita (nominal pesos)"
 
 gen year = 2005
 
-gen folio05 = folio
+gen folio_05 = folio
+
+keep folio_05 year hh_totincome 
 
 compress 
 

@@ -112,7 +112,9 @@ gen exp_health_yearly = exp_health_monthly * 12
 
 gen year = 2005
 
-gen folio05 = folio
+gen folio_05 = folio
+
+compress
 
 cd "$projdir/dta/cln/ENNVIH"
 save "ennvih_healthexp_hhlvl_05.dta", replace

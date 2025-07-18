@@ -220,6 +220,9 @@ gen year = 2016
 compress 
 
 saveold "$projdir/dta/cln/ELCA/elca_hhdebt_16.dta", replace
+
+* -------------------------------------------------------------------
+
 append using "$projdir/dta/cln/ELCA/elca_hhdebt_13.dta"
 append using "$projdir/dta/cln/ELCA/elca_hhdebt_10.dta"
 
